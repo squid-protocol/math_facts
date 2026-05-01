@@ -1,0 +1,231 @@
+<!-- FILE: templates/progress.html -->
+<!-- UPDATED with advanced axis and sizing controls -->
+{% extends "layout.html" %}
+{% block content %}
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('practice', username=username) }}">Practice More!</a>
+    </nav>
+    <h2>Progress for {{ username }}</h2>
+
+    {% if not progress_data %}
+        <p style="text-align: center;">No data yet! Go practice to see your progress.</p>
+    
+    {% elif progress_data.type == 'plotly_heatmap' %}
+        <div class="level-system-container">
+            <h3>Speed Level</h3>
+            <div class="thermometer">
+                <div class="thermometer-fill" style="width: {{ progress_data.data.level_info.percentage }}%;"></div>
+            </div>
+            <div class="level-display">
+                Level {{ progress_data.data.level_info.total_level }}
+            </div>
+        </div>
+
+        <h3 style="text-align: center; margin-top: 40px;">Average Speed by Number Group</h3>
+        <div style="display: flex; justify-content: center; margin-bottom: 40px;">
+            <div id="summary-heatmap-div"></div>
+        </div>
+        
+        <div class="detail-view-grid">
+            <div class="chart-container">
+                <h4 class="chart-title">Detailed Speed per Question</h4>
+                <div id="detail-heatmap-div"></div>
+            </div>
+            <div class="chart-container">
+                <h4 id="line-chart-title" class="chart-title">Hover for Progress</h4>
+                <div id="line-chart-div"></div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const progressData = {{ progress_data.data | tojson }};
+                const detailHeatmapDiv = document.getElementById('detail-heatmap-div');
+                const summaryHeatmapDiv = document.getElementById('summary-heatmap-div');
+                const lineChartDiv = document.getElementById('line-chart-div');
+                const lineChartTitle = document.getElementById('line-chart-title');
+
+                const sharedFont = {
+                    family: 'Poppins, sans-serif',
+                    size: 14,
+                    color: '#333'
+                };
+
+                const quantizedColorscale = [
+                    [0.0, '#0d6efd'], [1/6, '#0d6efd'], [1/6, '#198754'], [2/6, '#198754'],
+                    [2/6, '#9acd32'], [3/6, '#9acd32'], [3/6, '#ffc107'], [4/6, '#ffc107'],
+                    [4/6, '#fd7e14'], [5/6, '#fd7e14'], [5/6, '#dc3545'], [1.0, '#dc3545']
+                ];
+
+                const summaryPlotData = [{
+                    z: progressData.summary_heatmap.z, x: progressData.summary_heatmap.x, y: [''],
+                    type: 'heatmap', hoverongaps: false, colorscale: quantizedColorscale,
+                    zmin: 0, zmax: 6, xgap: 2, ygap: 2, showscale: false,
+                    hovertext: progressData.summary_heatmap.hover_texts, hoverinfo: 'text',
+                    hoverlabel: { font: sharedFont, bgcolor: 'white' } 
+                }];
+                const summaryLayout = {
+                    autosize: false, 
+                    margin: { l: 50, r: 50, b: 20, t: 20, pad: 4 },
+                    xaxis: { 
+                        ticks: '',
+                        tickfont: { size: 14 } 
+                    }, 
+                    yaxis: { ticks: '', showticklabels: false }
+                };
+
+                const detailPlotData = [{
+                    z: progressData.detail_heatmap.z, x: progressData.detail_heatmap.x, y: progressData.detail_heatmap.y,
+                    type: 'heatmap', hoverongaps: false, colorscale: quantizedColorscale,
+                    zmin: 0, zmax: 6, xgap: 2, ygap: 2,
+                    colorbar: { 
+                        title: 'Fastest Time (s)', 
+                        tickvals: [0.5, 1.5, 2.5, 3.5, 4.5, 5.5],
+                        ticktext: ['< 1s', '1-2s', '2-3s', '3-4s', '4-5s', '> 5s'],
+                        tickfont: { size: 12 } 
+                    },
+                    hovertext: progressData.detail_heatmap.hover_texts, hoverinfo: 'text',
+                    hoverlabel: { font: sharedFont, bgcolor: 'white' } 
+                }];
+                
+                const sharedMargin = { l: 50, r: 40, b: 50, t: 10, pad: 4 };
+
+                const detailLayout = {
+                    font: sharedFont,
+                    xaxis: { type: 'category' },
+                    yaxis: { autorange: 'reversed', scaleanchor: 'x', scaleratio: 1, type: 'category' },
+                    autosize: false,
+                    margin: sharedMargin
+                };
+                
+                // --- NEW: Function to calculate "nice" tick intervals ---
+                function getNiceTickInterval(maxValue, numTicks = 5) {
+                    if (maxValue <= 0) return 1;
+                    const rawStep = maxValue / numTicks;
+                    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                    const residual = rawStep / magnitude;
+                    let tick;
+                    if (residual > 5) {
+                        tick = 10 * magnitude;
+                    } else if (residual > 2) {
+                        tick = 5 * magnitude;
+                    } else if (residual > 1) {
+                        tick = 2 * magnitude;
+                    } else {
+                        tick = magnitude;
+                    }
+                    return Math.max(1, tick); // Ensure tick is at least 1
+                }
+
+                // CORRECTED: Updated line graph layout for kid-friendly axes
+                const y_axis_dtick = getNiceTickInterval(progressData.max_y_range, 5);
+
+                const lineLayout = {
+                    font: sharedFont,
+                    xaxis: { 
+                        title: 'Attempt Number',
+                        showline: false,
+                        zeroline: false,
+                        range: [0.5, 5.5] // Default range
+                    },
+                    yaxis: { 
+                        title: 'Time (seconds)', 
+                        range: [0, progressData.max_y_range],
+                        showline: false,
+                        zeroline: false,
+                        dtick: y_axis_dtick
+                    },
+                    autosize: false,
+                    margin: sharedMargin
+                };
+                
+                function drawCharts() {
+                    const detailContainer = document.querySelector('.detail-view-grid');
+                    const gap = 40;
+                    let chartWidth = (detailContainer.offsetWidth - gap) / 2;
+                    chartWidth = Math.max(300, Math.min(chartWidth, 800));
+                    
+                    // CORRECTED: Apply 80% scaling for the line graph
+                    const heatmapSize = chartWidth;
+                    const lineChartSize = chartWidth * 0.8;
+                    
+                    const colorbarFactor = 1.20; 
+                    detailLayout.width = heatmapSize * colorbarFactor;
+                    detailLayout.height = heatmapSize;
+
+                    lineLayout.width = lineChartSize;
+                    lineLayout.height = lineChartSize;
+                    
+                    // --- DEBUGGING STATEMENTS ---
+                    console.log("--- Chart Sizing ---");
+                    console.log("Heatmap Size:", {width: detailLayout.width, height: detailLayout.height});
+                    console.log("Line Chart Size:", {width: lineLayout.width, height: lineLayout.height});
+
+                    Plotly.newPlot(detailHeatmapDiv, detailPlotData, detailLayout, {responsive: false});
+                    Plotly.newPlot(lineChartDiv, [], lineLayout, {responsive: false}); 
+                    
+                    summaryLayout.width = detailLayout.width + lineLayout.width + gap;
+                    summaryLayout.height = 100;
+                    Plotly.newPlot(summaryHeatmapDiv, summaryPlotData, summaryLayout, {responsive: false});
+                }
+
+                drawCharts();
+                window.addEventListener('resize', drawCharts);
+
+                detailHeatmapDiv.on('plotly_hover', function(data) {
+                    const point = data.points[0];
+                    const questionKey = `${point.x}x${point.y}`;
+                    const history = progressData.history_data[questionKey];
+
+                    if (history && history.length > 1) {
+                        lineChartTitle.textContent = `Progress for ${point.x} × ${point.y}`;
+                        
+                        // CORRECTED: Dynamically set x-axis range and ticks
+                        const x_attempts = Array.from({length: history.length}, (_, i) => i + 1);
+                        lineLayout.xaxis.range = [0.5, x_attempts.length + 0.5];
+                        lineLayout.xaxis.dtick = getNiceTickInterval(x_attempts.length, 5);
+
+                        const lineTrace = {
+                            x: x_attempts,
+                            y: history,
+                            mode: 'lines+markers', type: 'scatter', line: { color: '#0d6efd', width: 3 }
+                        };
+                        Plotly.react(lineChartDiv, [lineTrace], lineLayout);
+                    } else {
+                        lineChartTitle.textContent = 'Not Enough Data';
+                        Plotly.react(lineChartDiv, [], lineLayout);
+                    }
+                });
+
+                detailHeatmapDiv.on('plotly_unhover', function(data) {
+                    lineChartTitle.textContent = 'Hover for Progress';
+                    Plotly.react(lineChartDiv, [], lineLayout);
+                });
+            });
+        </script>
+
+    {% elif progress_data.type == 'table' %}
+        <!-- Rosalyn's Table View -->
+        <h3>Overall Stats</h3>
+        <table class="progress-table">
+            <tr><th>Average Time per Question</th><th>Overall Accuracy</th></tr>
+            <tr>
+                <td>{{ "%.2f"|format(progress_data.data.total_stats.avg_time_s) }} seconds</td>
+                <td>{{ "%.2f"|format(progress_data.data.total_stats.percent_correct) }}%</td>
+            </tr>
+        </table>
+        <h3>Detailed Question Stats</h3>
+        <table class="progress-table">
+            <tr><th>Question</th><th>Average Time</th><th>Accuracy</th><th>Attempts</th></tr>
+            {% for (n1, n2), data in progress_data.data.question_stats.items() %}
+            <tr>
+                <td>{{ n1 }} {{ operator }} {{ n2 }}</td>
+                <td>{{ "%.2f"|format(data.avg_time_s) }}s</td>
+                <td>{{ "%.2f"|format(data.percent_correct) }}%</td>
+                <td>{{ data.attempts }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endblock %}

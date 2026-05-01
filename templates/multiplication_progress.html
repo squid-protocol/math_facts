@@ -1,0 +1,99 @@
+<!-- FILE: templates/multiplication_progress.html -->
+{% extends "layout.html" %}
+{% block content %}
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('practice', username=username) }}">Practice More!</a>
+    </nav>
+    <h2>Progress for {{ username }}</h2>
+
+    {% if not progress_data %}
+        <p style="text-align: center;">No data yet! Go practice to see your progress.</p>
+    
+    {% else %}
+        <div class="level-system-container">
+            <h3>Speed Level</h3>
+            <div class="thermometer">
+                <div class="thermometer-fill" style="width: {{ progress_data.data.level_info.percentage }}%;"></div>
+            </div>
+            <div class="level-display">
+                Level {{ progress_data.data.level_info.total_level }}
+            </div>
+        </div>
+        
+        <div class="detail-view-grid">
+            <div class="chart-container">
+                <h4 class="chart-title">Detailed Speed per Question</h4>
+                <div id="detail-heatmap-div"></div>
+            </div>
+            <div class="chart-container">
+                <h4 id="line-chart-title" class="chart-title">Hover for Progress</h4>
+                <div id="line-chart-div"></div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const progressData = {{ progress_data.data | tojson }};
+                const detailHeatmapDiv = document.getElementById('detail-heatmap-div');
+                const lineChartDiv = document.getElementById('line-chart-div');
+                const lineChartTitle = document.getElementById('line-chart-title');
+
+                const quantizedColorscale = [
+                    [0.0, '#0d6efd'], [1/6, '#0d6efd'], [1/6, '#198754'], [2/6, '#198754'],
+                    [2/6, '#9acd32'], [3/6, '#9acd32'], [3/6, '#ffc107'], [4/6, '#ffc107'],
+                    [4/6, '#fd7e14'], [5/6, '#fd7e14'], [5/6, '#dc3545'], [1.0, '#dc3545']
+                ];
+
+                const detailPlotData = [{
+                    z: progressData.detail_heatmap.z, x: progressData.detail_heatmap.x, y: progressData.detail_heatmap.y,
+                    type: 'heatmap', hoverongaps: false, colorscale: quantizedColorscale,
+                    zmin: 0, zmax: 6, xgap: 2, ygap: 2,
+                    colorbar: { title: 'Fastest Time (s)', x: 1.15, y: 0.5, yanchor: 'middle', len: 0.9 },
+                    hovertext: progressData.detail_heatmap.hover_texts, hoverinfo: 'text'
+                }];
+                
+                const detailLayout = {
+                    xaxis: { type: 'category' },
+                    yaxis: { autorange: 'reversed', scaleanchor: 'x', type: 'category' },
+                    autosize: true,
+                    margin: { l: 40, r: 40, b: 40, t: 40, pad: 0 }
+                };
+                
+                const lineLayout = {
+                    xaxis: { title: 'Attempt Number' },
+                    yaxis: { title: 'Time (seconds)', range: [0, progressData.max_y_range] },
+                    autosize: true,
+                    margin: { l: 50, r: 40, b: 50, t: 40, pad: 4 }
+                };
+                
+                Plotly.newPlot(detailHeatmapDiv, detailPlotData, detailLayout, {responsive: true});
+                Plotly.newPlot(lineChartDiv, [], lineLayout, {responsive: true}); 
+
+                detailHeatmapDiv.on('plotly_hover', function(data) {
+                    const point = data.points[0];
+                    const questionKey = `${point.x}x${point.y}`;
+                    const history = progressData.history_data[questionKey];
+
+                    if (history && history.length > 1) {
+                        lineChartTitle.textContent = `Progress for ${point.x} × ${point.y}`;
+                        const lineTrace = {
+                            x: Array.from({length: history.length}, (_, i) => i + 1),
+                            y: history,
+                            mode: 'lines+markers', type: 'scatter', line: { color: '#0d6efd', width: 3 }
+                        };
+                        Plotly.react(lineChartDiv, [lineTrace], lineLayout);
+                    } else {
+                        lineChartTitle.textContent = 'Not Enough Data';
+                        Plotly.react(lineChartDiv, [], lineLayout);
+                    }
+                });
+
+                detailHeatmapDiv.on('plotly_unhover', function(data) {
+                    lineChartTitle.textContent = 'Hover for Progress';
+                    Plotly.react(lineChartDiv, [], lineLayout);
+                });
+            });
+        </script>
+    {% endif %}
+{% endblock %}

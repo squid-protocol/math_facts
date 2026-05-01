@@ -1,0 +1,11 @@
+<!-- FILE: templates/index.html -->
+<!-- The home page for selecting a student. -->
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Select a Student</h1>
+    <div class="button-container">
+        {% for student in students %}
+            <a href="{{ url_for('practice', username=student) }}" class="button">{{ student }}</a>
+        {% endfor %}
+    </div>
+{% endblock %}

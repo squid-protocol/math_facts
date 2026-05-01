@@ -1,0 +1,93 @@
+
+<!-- FILE: templates/practice.html -->
+<!-- UPDATED to remove all session and timer logic -->
+{% extends "layout.html" %}
+{% block content %}
+    <nav>
+        <a href="{{ url_for('index') }}">Change Student</a>
+        <a href="{{ url_for('progress', username=username) }}">View My Progress</a>
+    </nav>
+    <h2>Practice Time, {{ username }}!</h2>
+
+    <!-- Running Score Display -->
+    <div class="stats-display">
+        Score: {{ total_correct }}/{{ total_answered }}
+    </div>
+
+    <form id="practice-form" action="{{ url_for('submit_answer', username=username) }}" method="post" class="practice-form">
+        
+        <input type="hidden" name="num1" value="{{ num1 }}">
+        <input type="hidden" name="num2" value="{{ num2 }}">
+        <input type="hidden" name="start_time" value="{{ start_time }}">
+
+        <!-- Conditional Layout Logic -->
+        {% if username == 'Rosalyn' %}
+            <div class="practice-layout layout-3-cols">
+                <!-- Column 1: Image -->
+                <div class="practice-column image-col">
+                    <img src="{{ url_for('static', filename='images/hundreds-number-chart.jpg') }}" 
+                         alt="Hundreds Number Chart" class="helper-chart" onerror="this.style.display='none'">
+                </div>
+
+                <!-- Column 2: Question -->
+                <div class="practice-column question-col">
+                    <div class="vertical-question">
+                        <span class="number-top">{{ num1 }}</span>
+                        <span class="number-bottom"><span class="operator-plus">+</span>{{ num2 }}</span>
+                        <div class="hr-line"></div>
+                    </div>
+                </div>
+
+                <!-- Column 3: Answer Entry -->
+                <div class="practice-column answer-col">
+                    <input type="number" name="answer" id="answer-input" class="answer-input" required readonly onfocus="this.blur()">
+                    <div id="keypad" class="keypad">
+                        <button type="button" class="keypad-btn" data-key="1">1</button><button type="button" class="keypad-btn" data-key="2">2</button><button type="button" class="keypad-btn" data-key="3">3</button>
+                        <button type="button" class="keypad-btn" data-key="4">4</button><button type="button" class="keypad-btn" data-key="5">5</button><button type="button" class="keypad-btn" data-key="6">6</button>
+                        <button type="button" class="keypad-btn" data-key="7">7</button><button type="button" class="keypad-btn" data-key="8">8</button><button type="button" class="keypad-btn" data-key="9">9</button>
+                        <button type="button" class="keypad-btn clear" data-key="clear">Clear</button><button type="button" class="keypad-btn" data-key="0">0</button><button type="submit" class="keypad-btn" data-key="submit">Go</button>
+                    </div>
+                </div>
+            </div>
+        {% else %} <!-- Lola's Layout -->
+            <div class="practice-layout layout-2-cols">
+                <!-- Column 1: Question -->
+                <div class="practice-column question-col">
+                    <div class="question">{{ num1 }} {{ operator }} {{ num2 }}</div>
+                </div>
+
+                <!-- Column 2: Answer Entry -->
+                <div class="practice-column answer-col">
+                    <input type="number" name="answer" id="answer-input" class="answer-input" required readonly onfocus="this.blur()">
+                    <div id="keypad" class="keypad">
+                        <button type="button" class="keypad-btn" data-key="1">1</button><button type="button" class="keypad-btn" data-key="2">2</button><button type="button" class="keypad-btn" data-key="3">3</button>
+                        <button type="button" class="keypad-btn" data-key="4">4</button><button type="button" class="keypad-btn" data-key="5">5</button><button type="button" class="keypad-btn" data-key="6">6</button>
+                        <button type="button" class="keypad-btn" data-key="7">7</button><button type="button" class="keypad-btn" data-key="8">8</button><button type="button" class="keypad-btn" data-key="9">9</button>
+                        <button type="button" class="keypad-btn clear" data-key="clear">Clear</button><button type="button" class="keypad-btn" data-key="0">0</button><button type="submit" class="keypad-btn" data-key="submit">Go</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const keypad = document.getElementById('keypad');
+        const answerInput = document.getElementById('answer-input');
+
+        // Keypad logic is all we need now
+        keypad.addEventListener('click', (e) => {
+            const button = e.target.closest('.keypad-btn');
+            if (!button) return;
+
+            const key = button.dataset.key;
+
+            if (key === 'clear') {
+                answerInput.value = '';
+            } else if (key !== 'submit') { // Don't type the word "submit"
+                answerInput.value += key;
+            }
+        });
+    });
+</script>
+{% endblock %}

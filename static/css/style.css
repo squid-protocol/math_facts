@@ -1,0 +1,272 @@
+/* Import a nice, clean font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
+
+
+/* Define color variables for easy theming */
+:root {
+    --primary-color: #4a90e2;
+    --primary-dark: #357ABD;
+    --background-color: #f7f9fc;
+    --surface-color: #ffffff;
+    --text-color: #333;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --border-color: #e0e0e0;
+}
+
+/* General body styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+/* Main container for content */
+.container {
+    max-width: 90%;
+    width: 100%;
+    margin: 0 auto;
+    background: var(--surface-color);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color);
+}
+
+h1, h2, h3, h4 {
+    color: var(--primary-dark);
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+h1 { font-size: 2.5em; font-weight: 700; }
+h2 { font-size: 2em; font-weight: 600; }
+h3 { font-size: 1.75em; font-weight: 600; }
+h4 { font-size: 1.5em; font-weight: 600; }
+
+
+/* Navigation bar styling */
+nav {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+nav a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.1em;
+    transition: color 0.3s;
+}
+nav a:hover { color: var(--primary-dark); }
+
+/* Button styles */
+.button-container {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+.button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+.button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+/* Practice Form Styling */
+.practice-form { text-align: center; }
+.question {
+    font-size: 5.5em;
+    font-weight: 700;
+    margin: 20px 0;
+    color: #222;
+}
+.answer-input {
+    font-size: 2.5em;
+    font-family: 'Poppins', sans-serif;
+    width: 220px;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+    margin: 20px 10px 0 10px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background-color: #f8f9fa;
+}
+.answer-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2);
+}
+
+/* Progress Table Styling */
+.progress-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.progress-table th, .progress-table td { border: 1px solid var(--border-color); padding: 14px; text-align: center; }
+.progress-table th { background-color: #f8f9fa; font-weight: 600; }
+.progress-table tr:nth-child(even) { background-color: #fdfdfd; }
+
+/* Flash message styling */
+.flash-messages { list-style-type: none; padding: 0; margin: 0 0 20px 0; }
+.flash {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+.flash.success { background-color: #e9f7ec; color: var(--success-color); border: 1px solid var(--success-color); }
+.flash.error { background-color: #fdecea; color: var(--error-color); border: 1px solid var(--error-color); }
+
+/* --- STYLES FOR ROSALYN'S PAGE --- */
+.helper-chart {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.vertical-question {
+    display: inline-block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 5em;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 20px auto;
+    text-align: right;
+    color: #222;
+}
+.vertical-question .number-top { display: block; padding: 0 10px; }
+.vertical-question .number-bottom { display: block; }
+.vertical-question .operator-plus { padding-right: 0.5ch; }
+.vertical-question .hr-line { border-bottom: 3px solid #333; margin-top: 10px; }
+
+/* --- PRACTICE PAGE FEATURE STYLES --- */
+.stats-display {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #555;
+    background-color: #eef2f7;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 0 auto 20px auto;
+    max-width: 300px;
+}
+/* Keypad styles */
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 300px;
+    margin: 20px auto;
+}
+.keypad-btn {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.2em;
+    font-weight: 600;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.keypad-btn:hover { background-color: #f8f9fa; border-color: #ccc; }
+.keypad-btn:active { background-color: var(--primary-color); color: white; transform: scale(0.95); }
+.keypad-btn.clear { grid-column: span 3; background-color: #fdecea; color: var(--error-color); }
+
+/* --- MULTI-COLUMN LAYOUT STYLES --- */
+.practice-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 40px;
+    margin-top: 30px;
+}
+.practice-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.layout-3-cols .practice-column.image-col { flex: 0 0 35%; }
+.layout-3-cols .practice-column.question-col { flex: 1 1 30%; }
+.layout-3-cols .practice-column.answer-col { flex: 1 1 35%; }
+.layout-2-cols .practice-column.question-col { flex: 1 1 50%; }
+.layout-2-cols .practice-column.answer-col { flex: 1 1 50%; }
+
+/* --- INTERACTIVE PROGRESS STYLES --- */
+.detail-view-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+.chart-container {
+    /* Container for title and chart div */
+}
+.chart-title {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+}
+
+/* --- LEVEL UP SYSTEM STYLES --- */
+.level-system-container {
+    max-width: 600px;
+    margin: 20px auto 40px auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    text-align: center;
+}
+.level-system-container h3 {
+    margin-top: 0;
+}
+.thermometer {
+    height: 30px;
+    background-color: #e9ecef;
+    border-radius: 15px;
+    padding: 4px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+.thermometer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0d6efd 0%, #198754 50%, #9acd32 100%);
+    border-radius: 12px;
+    transition: width 0.5s ease-in-out;
+    box-shadow: 0 0 10px rgba(25, 135, 84, 0.5);
+}
+.level-display {
+    font-size: 1.8em;
+    font-weight: 700;
+    margin-top: 10px;
+    color: var(--primary-dark);
+}

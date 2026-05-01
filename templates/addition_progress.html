@@ -1,0 +1,154 @@
+<!-- FILE: templates/addition_progress.html -->
+{% extends "layout.html" %}
+{% block content %}
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('practice', username=username) }}">Practice More!</a>
+    </nav>
+    <h2>Progress for {{ username }}</h2>
+
+    {% if not progress_data %}
+        <p style="text-align: center;">No data yet! Go practice to see your progress.</p>
+    {% else %}
+        <div class="level-system-container">
+            <h3>Mastery Level</h3>
+            <div class="thermometer">
+                <div class="thermometer-fill" style="width: {{ progress_data.data.level_info.percentage }}%;"></div>
+            </div>
+            <div class="level-display">
+                Level {{ progress_data.data.level_info.total_level }}
+            </div>
+        </div>
+
+        <div style="width: 100%; max-width: 900px; margin: 40px auto;">
+            <h4 class="chart-title">Correct Answers by Category</h4>
+            <p class="chart-subtitle" style="text-align: center; margin-top: -1em; margin-bottom: 1em;">Shows the total number of correct answers for each category.</p>
+            <div id="count-heatmap-div"></div>
+        </div>
+
+        <div class="level-system-container" style="max-width: 400px;">
+             <h3>Streaks</h3>
+             <p style="font-size: 1.2em; margin: 0;">
+                Longest Streak: <strong>{{ progress_data.data.streak_info.longest }}</strong><br>
+                Last Streak: <strong>{{ progress_data.data.streak_info.last }}</strong>
+             </p>
+        </div>
+
+        <h3 style="text-align: center; margin-top: 40px;">Summary by Bottom Number</h3>
+        <div class="summary-container" style="width: 100%; max-width: 800px; margin: 20px auto;">
+            <h4 class="chart-title">Accuracy</h4>
+            <div id="accuracy-summary-div"></div>
+        </div>
+        <div class="summary-container" style="width: 100%; max-width: 800px; margin: 20px auto;">
+            <h4 class="chart-title">Average Speed</h4>
+            <div id="time-summary-div"></div>
+        </div>
+
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const progressData = {{ progress_data.data | tojson }};
+                const countHeatmapDiv = document.getElementById('count-heatmap-div');
+                const accuracySummaryDiv = document.getElementById('accuracy-summary-div');
+                const timeSummaryDiv = document.getElementById('time-summary-div');
+
+                // --- 1. Main Heatmap ---
+                const countColorscale = [];
+                const purple_start = {r: 153, g: 102, b: 204};
+                const pink_end = {r: 255, g: 105, b: 180};
+                for (let i = 0; i <= 20; i++) {
+                    const p = i / 20.0;
+                    const r = Math.round(purple_start.r * (1 - p) + pink_end.r * p);
+                    const g = Math.round(purple_start.g * (1 - p) + pink_end.g * p);
+                    const b = Math.round(purple_start.b * (1 - p) + pink_end.b * p);
+                    countColorscale.push([p, `rgb(${r},${g},${b})`]);
+                }
+                const countPlotData = [{
+                    z: progressData.count_heatmap.z,
+                    x: progressData.count_heatmap.x,
+                    y: progressData.count_heatmap.y,
+                    type: 'heatmap', hoverongaps: false, colorscale: countColorscale,
+                    zmin: 0, zmax: 20, colorbar: { title: 'Correct Answers', dtick: 5 }
+                }];
+                const countLayout = {
+                    yaxis: { autorange: 'reversed', type: 'category' },
+                    xaxis: { type: 'category', side: 'top' },
+                    autosize: true, margin: { t: 50, b: 50, l: 50, r: 50 }
+                };
+                Plotly.newPlot(countHeatmapDiv, countPlotData, countLayout, {responsive: true});
+
+                // --- 2. Accuracy Summary Heatmap ---
+                const accuracyPlotData = [{
+                    z: progressData.accuracy_summary.z, x: progressData.accuracy_summary.x, y: [''],
+                    type: 'heatmap', hoverongaps: false, 
+                    colorscale: [[0, '#dc3545'], [0.25, '#ffc107'], [0.75, '#8A2BE2'], [1, '#FF69B4']],
+                    zmin: 0, zmax: 100, 
+                    colorbar: { 
+                        title: 'Accuracy %', 
+                        orientation: 'h', 
+                        y: -0.5, 
+                        yanchor: 'top',
+                        tickvals: [12.5, 37.5, 62.5, 87.5],
+                        ticktext: ['0-25%', '25-50%', '50-75%', '75-100%']
+                    },
+                    hovertext: progressData.accuracy_summary.hover_texts,
+                    hoverinfo: 'text'
+                }];
+                const accuracyLayout = { 
+                    yaxis: { showticklabels: false }, 
+                    autosize: true, 
+                    margin: { t: 20, b: 80, l: 40, r: 40 }
+                };
+                
+                // --- 3. Time Summary Heatmap ---
+                const timeColorscale = [
+                    [0.0, '#0d6efd'], [1/3, '#0d6efd'],
+                    [1/3, '#ffc107'], [2/3, '#ffc107'],
+                    [2/3, '#dc3545'], [1.0, '#dc3545']
+                ];
+                const timePlotData = [{
+                    z: progressData.time_summary.z, x: progressData.time_summary.x, y: [''],
+                    type: 'heatmap', hoverongaps: false, 
+                    colorscale: timeColorscale,
+                    zmin: 0, zmax: 30,
+                    reversescale: true, 
+                    colorbar: { 
+                        title: 'Time (s)', 
+                        orientation: 'h', 
+                        y: -0.5, 
+                        yanchor: 'top',
+                        tickvals: [5, 15, 25],
+                        ticktext: ['0-9s', '10-19s', '20s+']
+                    },
+                    hovertext: progressData.time_summary.hover_texts,
+                    hoverinfo: 'text'
+                }];
+                const timeLayout = { 
+                    yaxis: { showticklabels: false }, 
+                    autosize: true, 
+                    margin: { t: 20, b: 80, l: 40, r: 40 }
+                };
+
+                function resizeSummaryCharts() {
+                    const accuracyDiv = document.getElementById('accuracy-summary-div');
+                    const timeDiv = document.getElementById('time-summary-div');
+                    
+                    const chartWidth = accuracyDiv.offsetWidth;
+                    // CORRECTED: Adjust aspect ratio for a more square look
+                    const cellAspectRatio = 1.5; 
+                    const numCells = progressData.accuracy_summary.x.length;
+                    const chartHeight = (chartWidth / numCells) * cellAspectRatio + 100;
+
+                    accuracyLayout.height = chartHeight;
+                    timeLayout.height = chartHeight;
+
+                    Plotly.newPlot(accuracySummaryDiv, accuracyPlotData, accuracyLayout, {responsive: true});
+                    Plotly.newPlot(timeSummaryDiv, timePlotData, timeLayout, {responsive: true});
+                }
+
+                resizeSummaryCharts();
+                window.addEventListener('resize', resizeSummaryCharts);
+            });
+        </script>
+    {% endif %}
+{% endblock %}
