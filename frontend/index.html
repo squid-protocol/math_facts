@@ -66,13 +66,81 @@
     </style>
 </head>
 <body class="bg-slate-100 flex items-start justify-center min-h-screen p-4 font-sans pt-12 pb-24">
-
-    <div id="app" class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+{% verbatim %}
+    <div id="app" class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
         
+        <div v-if="showLeaderboardModal" class="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-8 border-4 border-indigo-500">
+                <h2 class="text-3xl font-black text-slate-800 mb-2">Submit High Score</h2>
+                <p class="text-slate-500 font-bold mb-6">Enter your details to join the global ranking.</p>
+                
+                <div class="space-y-4 mb-8">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Username / Initials (Required)</label>
+                        <input type="text" v-model="leaderboardForm.username" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none" placeholder="e.g. MathWizard99">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Age Bracket (Optional)</label>
+                        <select v-model="leaderboardForm.ageBracket" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none appearance-none">
+                            <option value="">Select Age...</option>
+                            <option value="under_10">Under 10</option>
+                            <option value="10_13">10 to 13</option>
+                            <option value="14_17">14 to 17</option>
+                            <option value="18_19">18 to 19</option>
+                            <option value="20_29">20 to 29</option>
+                            <option value="30_39">30 to 39</option>
+                            <option value="40_49">40 to 49</option>
+                            <option value="50_59">50 to 59</option>
+                            <option value="60_69">60 to 69</option>
+                            <option value="70_79">70 to 79</option>
+                            <option value="80_plus">80+</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div :class="{'col-span-2': leaderboardForm.country !== 'US' && leaderboardForm.country !== 'OTHER'}">
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Country (Optional)</label>
+                            <select v-model="leaderboardForm.country" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none appearance-none">
+                                <option value="">Select...</option>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="AU">Australia</option>
+                                <option value="OTHER">Other...</option>
+                            </select>
+                        </div>
+                        <div v-if="leaderboardForm.country === 'US'">
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">State</label>
+                            <select v-model="leaderboardForm.state" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none appearance-none">
+                                <option value="">State...</option>
+                                <option v-for="state in usStates" :key="state" :value="state">{{ state }}</option>
+                            </select>
+                        </div>
+                        <div v-if="leaderboardForm.country === 'OTHER'">
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Select Country</label>
+                            <select v-model="leaderboardForm.otherCountry" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none appearance-none">
+                                <option value="">Country...</option>
+                                <option v-for="c in allCountries" :key="c" :value="c">{{ c }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button @click="showLeaderboardModal = false" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition">Cancel</button>
+                    <button @click="submitLeaderboard" :disabled="!leaderboardForm.username" class="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-300 text-white font-bold py-3 rounded-xl transition shadow-md">Submit Score</button>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col lg:col-span-7">
-            <div class="bg-slate-800 p-6 text-white flex justify-between items-center">
+            <div class="bg-slate-800 p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 class="text-2xl font-black tracking-tight">Your High Scores</h2>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-2xl font-black tracking-tight">Your High Scores</h2>
+                        <button @click="showLeaderboardModal = true; pauseGame()" class="bg-indigo-500 hover:bg-indigo-400 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg shadow-sm transition transform hover:scale-105">
+                            🏆 Submit to Leaderboard
+                        </button>
+                    </div>
                     <p class="text-slate-400 text-sm mt-1">Determination is earned by breaking your own records.</p>
                 </div>
                 <div class="flex gap-4">
@@ -351,11 +419,12 @@
                 </div>
             </div>
 
-        </div>
     </div>
+</div>
+{% endverbatim %}
 
-    <script>
-        const { createApp } = Vue
+<script>
+    const { createApp } = Vue
 
         createApp({
             data() {
@@ -381,7 +450,19 @@
                     justUnlocked: null,
                     currentView: 'game',
 
-                    gameMode: 'campaign', 
+                    showLeaderboardModal: false,
+                    leaderboardForm: { username: '', ageBracket: '', country: '', state: '', otherCountry: '', consentToTrack: false },
+                    deviceId: null,
+                    usStates: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'],
+                    allCountries: ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Samoa', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'],
+
+                    // Telemetry State
+                    sessionStartTime: Date.now(),
+                    initialMasteryScore: 0,
+                    initialPlayerLevel: 0,
+                    initialDetermination: 0,
+
+                    gameMode: 'campaign',
                     targetSpeed: 3.5,
                     targetAccuracy: 90,
                     windowSize: 10 
@@ -546,6 +627,20 @@
                 }
             },
             methods: {
+                async selectProfile(name) {
+                    this.playerId = name;
+                    
+                    // Wipe the current state clean so we don't bleed data between profiles
+                    this.history = [];
+                    this.unlockedNumbers = [0, 2, 5];
+                    this.unlockSequence = [[10], [1], [3, 4], [6], [7], [8], [9], [11], [12]];
+                    this.determinationScore = 0;
+                    
+                    await this.loadData();
+                    this.generateQuestion();
+                    this.currentView = 'game';
+                },
+
                 getPairStats(row, col) {
                     const min = Math.min(row, col);
                     const max = Math.max(row, col);
@@ -619,12 +714,10 @@
                     if (savedHistory) this.history = JSON.parse(savedHistory);
                     if (savedDetermination) this.determinationScore = parseInt(savedDetermination);
                     if (savedSequence) this.unlockSequence = JSON.parse(savedSequence);
-                    
                     if (savedUnlocks) {
                         const loaded = JSON.parse(savedUnlocks);
                         this.unlockedNumbers = [...new Set(loaded)].sort((a, b) => a - b);
                     }
-                    
                     if (savedSettings) {
                         const settings = JSON.parse(savedSettings);
                         this.targetSpeed = settings.targetSpeed || 3.5;
@@ -633,6 +726,7 @@
                         this.gameMode = settings.gameMode || 'campaign';
                     }
                 },
+                
                 saveData() {
                     localStorage.setItem('mathHistory', JSON.stringify(this.history));
                     localStorage.setItem('mathUnlocked', JSON.stringify(this.unlockedNumbers));
@@ -645,6 +739,72 @@
                         gameMode: this.gameMode
                     }));
                 },
+
+                async submitLeaderboard() {
+                    if (!this.leaderboardForm.username) return;
+                    
+                    const finalCountry = this.leaderboardForm.country === 'OTHER' 
+                        ? this.leaderboardForm.otherCountry 
+                        : this.leaderboardForm.country;
+
+                    // Calculate overall accuracy for this session
+                    const totalAttempts = this.history.length;
+                    const correctCount = this.history.filter(a => a.isCorrect).length;
+                    const sessionAccuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+
+                    // Handle the Consent & Token Generation
+                    if (this.leaderboardForm.consentToTrack) {
+                        if (!this.deviceId) {
+                            this.deviceId = crypto.randomUUID();
+                            localStorage.setItem('fastMathDeviceId', this.deviceId);
+                        }
+                    } else {
+                        // If they uncheck the box, respect their choice and wipe the token
+                        this.deviceId = null;
+                        localStorage.removeItem('fastMathDeviceId');
+                    }
+
+                    const payload = {
+                        // Device Identity
+                        device_id: this.deviceId,
+
+                        // Demographics
+                        username: this.leaderboardForm.username,
+                        age_bracket: this.leaderboardForm.ageBracket || null,
+                        country: finalCountry || null,
+                        state: this.leaderboardForm.country === 'US' ? this.leaderboardForm.state : null,
+                        
+                        // Core Gamification
+                        determination_score: this.determinationScore,
+                        mastery_score: this.masteryScore,
+                        player_level: this.playerLevel,
+                        
+                        // Session Telemetry (Efficacy & Engagement)
+                        session_duration_seconds: Math.floor((Date.now() - this.sessionStartTime) / 1000),
+                        total_questions_answered: totalAttempts,
+                        session_accuracy_percent: sessionAccuracy,
+                        
+                        // Delta Metrics (Growth)
+                        levels_gained: this.playerLevel - this.initialPlayerLevel,
+                        mastery_gained: this.masteryScore - this.initialMasteryScore,
+                        determination_gained: this.determinationScore - this.initialDetermination
+                    };
+
+                    try {
+                        await fetch('/api/leaderboard/submit', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        alert("Score submitted successfully!");
+                        this.showLeaderboardModal = false;
+                        this.resumeGame();
+                    } catch (error) {
+                        alert("Failed to connect to the leaderboard server.");
+                        console.error(error);
+                    }
+                },
+
                 resetProgress() {
                     if(confirm("Are you sure you want to delete all saved data? This cannot be undone.")) {
                         localStorage.clear();
@@ -910,6 +1070,15 @@
             },
             mounted() {
                 this.loadData();
+                
+                // Check if they previously consented and we already have a token
+                this.deviceId = localStorage.getItem('fastMathDeviceId');
+
+                // Snapshot the user's skill level exactly when the page loads
+                this.initialMasteryScore = this.masteryScore;
+                this.initialPlayerLevel = this.playerLevel;
+                this.initialDetermination = this.determinationScore;
+                
                 this.generateQuestion();
                 window.addEventListener('keydown', this.handleKeydown);
                 window.addEventListener('click', this.handleGlobalClick);
