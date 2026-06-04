@@ -1,0 +1,18 @@
+[tool.ruff]
+# Set the line length to 100 (fixes the E501 errors)
+line-length = 100
+
+# Ignore Django migration folders and dependencies
+exclude = [
+    "migrations",
+    ".git",
+    "__pycache__",
+    "math_facts_venv",
+    "node_modules"
+]
+
+[tool.ruff.lint]
+# E = pycodestyle (like Flake8)
+# F = pyflakes (like Flake8)
+# I = isort (import sorting)
+select = ["E", "F", "I"]

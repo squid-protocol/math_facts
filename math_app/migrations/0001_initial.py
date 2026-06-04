@@ -7,21 +7,28 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='MathProgress',
+            name="MathProgress",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('player_id', models.CharField(max_length=50, unique=True)),
-                ('history', models.JSONField(default=list)),
-                ('unlocked_numbers', models.JSONField(default=list)),
-                ('unlock_sequence', models.JSONField(default=list)),
-                ('settings', models.JSONField(default=dict)),
-                ('determination_score', models.IntegerField(default=0)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("player_id", models.CharField(max_length=50, unique=True)),
+                ("history", models.JSONField(default=list)),
+                ("unlocked_numbers", models.JSONField(default=list)),
+                ("unlock_sequence", models.JSONField(default=list)),
+                ("settings", models.JSONField(default=dict)),
+                ("determination_score", models.IntegerField(default=0)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
             ],
         ),
     ]
