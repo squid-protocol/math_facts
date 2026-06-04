@@ -5,7 +5,7 @@ from .models import AnalyticsSummary, LeaderboardEntry
 
 def update_global_analytics():
     """
-    Runs every 60 seconds. Crunches the raw LeaderboardEntries 
+    Runs every 60 seconds. Crunches the raw LeaderboardEntries
     and updates the AnalyticsSummary table.
     """
 

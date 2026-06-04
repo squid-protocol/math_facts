@@ -42,7 +42,8 @@ def utility_dashboard(request):
         or 0
     )
     avg_mastery_gain = (
-        LeaderboardEntry.objects.aggregate(Avg("mastery_gained"))["mastery_gained__avg"] or 0
+        LeaderboardEntry.objects.aggregate(Avg("mastery_gained"))["mastery_gained__avg"]
+        or 0
     )
 
     # 2. Extract Raw Telemetry for the Frontend Graphs
