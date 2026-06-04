@@ -17,8 +17,8 @@ def test_engine_calculator_flow(page: Page, live_server):
     # 2. Assert the Vue app mounted and the title is correct
     expect(page).to_have_title("FastMathFacts - Engine")
     
-    # 3. Verify the calculator grid loaded (Specifically the H1 heading)
-    expect(page.get_by_role("heading", name="Practice")).to_be_visible()
+    # 3. Verify the calculator grid loaded (Specifically the active profile heading)
+    expect(page.get_by_role("heading", name="Guest")).to_be_visible()
     
     # 4. Simulate clicking the keypad (e.g., typing '12')
     # exact=True ensures it clicks the '1' button, not grid square '10' or '11'
@@ -40,7 +40,7 @@ def test_settings_menu_toggle(page: Page, live_server):
     page.goto(live_server.url)
     
     # Wait for the main practice view to render
-    expect(page.get_by_role("heading", name="Practice")).to_be_visible()
+    expect(page.get_by_role("heading", name="Guest")).to_be_visible()
     
     # Click the settings gear
     page.get_by_role("button", name="⚙️ Settings").click()
