@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /utility/
+
+Sitemap: https://www.fastmathfacts.io/sitemap.xml

@@ -11,4 +11,20 @@ urlpatterns = [
     path("utility/", views.utility_dashboard, name="utility_dashboard"),
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
+    path(
+        "privacy-policy/",
+        TemplateView.as_view(template_name="privacy.html"),
+        name="privacy",
+    ),
+    path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
+    path(
+        "robots.txt",
+        TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
+    ),
+    path(
+        "sitemap.xml",
+        TemplateView.as_view(
+            template_name="sitemap.xml", content_type="application/xml"
+        ),
+    ),
 ]
