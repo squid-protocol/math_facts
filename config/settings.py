@@ -32,10 +32,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-l!82j0ij@r5z4$3ocnv)94f*i_d30hf*2^t2w8-+s=wd0)6-^q"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = os.environ.get(
+    "ALLOWED_HOSTS", "fastmathfacts.io,www.fastmathfacts.io,134.122.119.156"
+).split(",")
 
 # Application definition
 
@@ -65,7 +66,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "frontend"],
+        "DIRS": [BASE_DIR / "frontend", BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

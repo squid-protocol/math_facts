@@ -17,20 +17,20 @@ def sanitize_username(raw_name: str) -> str:
     """The ultimate defense against teenage chaos, Zalgo, and ghost names."""
     if not raw_name:
         return "Anonymous"
-        
+
     # 1. Strip trailing/leading whitespace
     name = raw_name.strip()
-    
+
     # 2. Hard length limit
     name = name[:15]
-    
+
     # 3. Regex Purge: Allows ONLY a-z, A-Z, 0-9, underscores, and dashes
-    name = re.sub(r'[^a-zA-Z0-9_-]', '', name)
-    
+    name = re.sub(r"[^a-zA-Z0-9_-]", "", name)
+
     # 4. Fallback if they typed ONLY zalgo/emojis and the string is now empty
     if not name:
         return "Anonymous"
-        
+
     # 5. Profanity check (Runs last so it isn't confused by hidden characters)
     return profanity.censor(name)
 
@@ -50,7 +50,7 @@ class LeaderboardPayload(Schema):
     player_level: int = Field(..., ge=0, le=1000)
 
     # Sanity check limits for session telemetry
-    session_duration_seconds: int = Field(..., ge=0, le=86400) # Max 24 hours
+    session_duration_seconds: int = Field(..., ge=0, le=86400)  # Max 24 hours
     total_questions_answered: int = Field(..., ge=0, le=10000)
     session_accuracy_percent: int = Field(..., ge=0, le=100)
 
