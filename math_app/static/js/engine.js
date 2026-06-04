@@ -3,7 +3,7 @@ const { createApp } = Vue
 createApp({
     data() {
         return {
-            unlockSequence: [[3], [4], [5], [10], [6], [7], [8], [9], [11], [12]],
+            unlockSequence: [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]],
             unlockedNumbers: [0, 1, 2],
             
             currentQuestion: { num1: 0, num2: 0 },
@@ -24,16 +24,23 @@ createApp({
             justUnlocked: null,
             currentView: 'game',
 
+            // Profile State
+            profiles: [],
+            activeProfile: 'Guest',
+            showProfileDropdown: false,
+            showAddPlayerModal: false,
+            newProfileName: '',
+
+            // Modals & Telemetry State
             showLeaderboardModal: false,
             showShareModal: false,
             isSharing: false,
             submissionState: 'idle', // 'idle' | 'submitting' | 'success' | 'error'
-            leaderboardForm: { username: '', ageBracket: '', country: '', state: '', otherCountry: '', consentToTrack: false },
+            leaderboardForm: { username: '', ageBracket: '', country: '', state: '', consentToTrack: false },
             deviceId: null,
             usStates: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'],
             allCountries: ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Samoa', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'],
 
-            // Telemetry State
             sessionStartTime: Date.now(),
             initialMasteryScore: 0,
             initialPlayerLevel: 0,
@@ -53,7 +60,7 @@ createApp({
         showLeaderboardModal(isOpen) {
             if (isOpen && this.globalCountries.length === 0) {
                 this.isFetchingGeo = true;
-                fetch('[https://raw.githubusercontent.com/stefanbinder/countries-states/master/countries.json](https://raw.githubusercontent.com/stefanbinder/countries-states/master/countries.json)')
+                fetch('https://raw.githubusercontent.com/stefanbinder/countries-states/master/countries.json')
                     .then(res => res.json())
                     .then(data => {
                         this.globalCountries = data;
@@ -232,6 +239,38 @@ createApp({
         }
     },
     methods: {
+        confirmAddPlayer() {
+            const cleanName = this.newProfileName.trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 15);
+            if (cleanName && cleanName !== 'Guest') {
+                if (!this.profiles.includes(cleanName)) {
+                    this.profiles.push(cleanName);
+                    localStorage.setItem('fastMathProfiles', JSON.stringify(this.profiles));
+                }
+                this.selectProfile(cleanName);
+            }
+            this.showAddPlayerModal = false;
+            this.newProfileName = '';
+        },
+
+        selectProfile(name) {
+            this.activeProfile = name;
+            localStorage.setItem('fastMathLastProfile', name);
+            
+            // Wipe the state clean so we don't bleed data between profiles
+            this.history = [];
+            this.unlockedNumbers = [0, 1, 2];
+            this.unlockSequence = [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]];
+            this.determinationScore = 0;
+            
+            this.loadData();
+            
+            this.initialMasteryScore = this.masteryScore;
+            this.initialPlayerLevel = this.playerLevel;
+            this.initialDetermination = this.determinationScore;
+            
+            this.generateQuestion();
+        },
+
         async shareStats() {
             if (this.isSharing) return;
             this.isSharing = true;
@@ -278,20 +317,6 @@ createApp({
                 console.error("Failed to capture image", err);
                 this.isSharing = false;
             }
-        },
-
-        async selectProfile(name) {
-            this.playerId = name;
-            
-            // Wipe the current state clean so we don't bleed data between profiles
-            this.history = [];
-            this.unlockedNumbers = [0, 1, 2];
-            this.unlockSequence = [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]];
-            this.determinationScore = 0;
-            
-            await this.loadData();
-            this.generateQuestion();
-            this.currentView = 'game';
         },
 
         getPairStats(row, col) {
@@ -358,11 +383,14 @@ createApp({
         },
 
         loadData() {
-            const savedHistory = localStorage.getItem('mathHistory');
-            const savedUnlocks = localStorage.getItem('mathUnlocked');
-            const savedSettings = localStorage.getItem('mathSettings');
-            const savedDetermination = localStorage.getItem('mathDetermination');
-            const savedSequence = localStorage.getItem('mathUnlockSequence');
+            if (!this.activeProfile) return;
+            const prefix = `math_${this.activeProfile}_`;
+
+            const savedHistory = localStorage.getItem(prefix + 'history');
+            const savedUnlocks = localStorage.getItem(prefix + 'unlocked');
+            const savedSettings = localStorage.getItem(prefix + 'settings');
+            const savedDetermination = localStorage.getItem(prefix + 'determination');
+            const savedSequence = localStorage.getItem(prefix + 'unlockSequence');
             
             if (savedHistory) this.history = JSON.parse(savedHistory);
             if (savedDetermination) this.determinationScore = parseInt(savedDetermination);
@@ -381,11 +409,14 @@ createApp({
         },
         
         saveData() {
-            localStorage.setItem('mathHistory', JSON.stringify(this.history));
-            localStorage.setItem('mathUnlocked', JSON.stringify(this.unlockedNumbers));
-            localStorage.setItem('mathDetermination', this.determinationScore.toString());
-            localStorage.setItem('mathUnlockSequence', JSON.stringify(this.unlockSequence));
-            localStorage.setItem('mathSettings', JSON.stringify({
+            if (!this.activeProfile) return;
+            const prefix = `math_${this.activeProfile}_`;
+
+            localStorage.setItem(prefix + 'history', JSON.stringify(this.history));
+            localStorage.setItem(prefix + 'unlocked', JSON.stringify(this.unlockedNumbers));
+            localStorage.setItem(prefix + 'determination', this.determinationScore.toString());
+            localStorage.setItem(prefix + 'unlockSequence', JSON.stringify(this.unlockSequence));
+            localStorage.setItem(prefix + 'settings', JSON.stringify({
                 targetSpeed: this.targetSpeed,
                 targetAccuracy: this.targetAccuracy,
                 windowSize: this.windowSize,
@@ -396,44 +427,32 @@ createApp({
         async submitLeaderboard() {
             if (!this.leaderboardForm.username) return;
 
-            // Calculate overall accuracy for this session
             const totalAttempts = this.history.length;
             const correctCount = this.history.filter(a => a.isCorrect).length;
             const sessionAccuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
 
-            // Handle the Consent & Token Generation
             if (this.leaderboardForm.consentToTrack) {
                 if (!this.deviceId) {
                     this.deviceId = crypto.randomUUID();
                     localStorage.setItem('fastMathDeviceId', this.deviceId);
                 }
             } else {
-                // If they uncheck the box, respect their choice and wipe the token
                 this.deviceId = null;
                 localStorage.removeItem('fastMathDeviceId');
             }
 
             const payload = {
-                // Device Identity
                 device_id: this.deviceId,
-
-                // Demographics
                 username: this.leaderboardForm.username,
                 age_bracket: this.leaderboardForm.ageBracket || null,
                 country: this.leaderboardForm.country || null,
                 state: this.leaderboardForm.state || null,
-                
-                // Core Gamification
                 determination_score: this.determinationScore,
                 mastery_score: this.masteryScore,
                 player_level: this.playerLevel,
-                
-                // Session Telemetry (Efficacy & Engagement)
                 session_duration_seconds: Math.floor((Date.now() - this.sessionStartTime) / 1000),
                 total_questions_answered: totalAttempts,
                 session_accuracy_percent: sessionAccuracy,
-                
-                // Delta Metrics (Growth)
                 levels_gained: this.playerLevel - this.initialPlayerLevel,
                 mastery_gained: this.masteryScore - this.initialMasteryScore,
                 determination_gained: this.determinationScore - this.initialDetermination
@@ -450,7 +469,6 @@ createApp({
                 
                 this.submissionState = 'success';
                 
-                // Hold the success screen for 2 seconds, then reset and close
                 setTimeout(() => {
                     this.showLeaderboardModal = false;
                     this.submissionState = 'idle';
@@ -464,12 +482,18 @@ createApp({
         },
 
         resetProgress() {
-            if(confirm("Are you sure you want to delete all saved data? This cannot be undone.")) {
-                localStorage.clear();
+            if(confirm(`Are you sure you want to delete all saved data for ${this.activeProfile}? This cannot be undone.`)) {
+                const prefix = `math_${this.activeProfile}_`;
+                localStorage.removeItem(prefix + 'history');
+                localStorage.removeItem(prefix + 'unlocked');
+                localStorage.removeItem(prefix + 'determination');
+                localStorage.removeItem(prefix + 'unlockSequence');
+                localStorage.removeItem(prefix + 'settings');
+                
                 this.history = [];
                 this.determinationScore = 0;
                 this.unlockedNumbers = [0, 1, 2];
-                this.unlockSequence = [[3], [4], [5], [10], [6], [7], [8], [9], [11], [12]];
+                this.unlockSequence = [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]];
                 this.generateQuestion();
                 this.currentView = 'game';
             }
@@ -564,23 +588,19 @@ createApp({
                     n2 = this.unlockedNumbers[poolIndex2];
                 }
             } else {
-                // Campaign Mode Algorithm
                 const r = Math.random();
                 const untested = this.getUntestedPairs();
                 const weakSpots = this.getWeakSpots();
 
                 if (r <= 0.50 && untested.length > 0) {
-                    // 50% chance: Target New / Untested Numbers
                     const spot = untested[Math.floor(Math.random() * untested.length)];
                     n1 = spot[0];
                     n2 = spot[1];
                 } else if (r > 0.75 && weakSpots.length > 0) {
-                    // 25% chance: Target known Weak Spots
                     const spot = weakSpots[Math.floor(Math.random() * weakSpots.length)];
                     n1 = spot[0];
                     n2 = spot[1];
                 } else {
-                    // 25% chance (or fallback if untested/weak arrays are empty): Random Review
                     const poolIndex1 = Math.floor(Math.random() * this.unlockedNumbers.length);
                     const poolIndex2 = Math.floor(Math.random() * this.unlockedNumbers.length);
                     n1 = this.unlockedNumbers[poolIndex1];
@@ -692,7 +712,6 @@ createApp({
 
             this.lastAnswered.trigger = 0; 
             
-            // The 50ms forced browser repaint hack
             setTimeout(() => {
                 this.lastAnswered = {
                     num1: answeredNum1,
@@ -702,7 +721,6 @@ createApp({
                 };
             }, 50);
             
-            // Match the 4s duration of the massive-glow CSS animation
             setTimeout(() => {
                 if (this.lastAnswered) this.lastAnswered.trigger = 0;
             }, 4000);
@@ -741,17 +759,16 @@ createApp({
         }
     },
     mounted() {
-        this.loadData();
-        
-        // Check if they previously consented and we already have a token
-        this.deviceId = localStorage.getItem('fastMathDeviceId');
+        const savedProfiles = localStorage.getItem('fastMathProfiles');
+        if (savedProfiles) this.profiles = JSON.parse(savedProfiles);
 
-        // Snapshot the user's skill level exactly when the page loads
-        this.initialMasteryScore = this.masteryScore;
-        this.initialPlayerLevel = this.playerLevel;
-        this.initialDetermination = this.determinationScore;
+        // Load whoever was playing last, otherwise default to Guest
+        const lastProfile = localStorage.getItem('fastMathLastProfile');
+        this.activeProfile = lastProfile && (this.profiles.includes(lastProfile) || lastProfile === 'Guest') ? lastProfile : 'Guest';
         
-        this.generateQuestion();
+        this.selectProfile(this.activeProfile);
+
+        this.deviceId = localStorage.getItem('fastMathDeviceId');
         window.addEventListener('keydown', this.handleKeydown);
         window.addEventListener('click', this.handleGlobalClick);
         window.addEventListener('blur', () => this.pauseGame(false)); 
