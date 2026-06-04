@@ -1,9 +1,10 @@
 import json
-import pytest
-from django.urls import reverse
-from django.contrib.auth.models import User
 
-from .models import LeaderboardEntry, AnalyticsSummary
+import pytest
+from django.contrib.auth.models import User
+from django.urls import reverse
+
+from .models import AnalyticsSummary, LeaderboardEntry
 from .tasks import update_global_analytics
 
 # This single line tells pytest that EVERY test in this file needs access to the test database
@@ -186,7 +187,7 @@ def test_utility_dashboard_staff_access(admin_client):
 # ==========================================
 
 def test_task_handles_ghost_users():
-    """Ensure the aggregation task safely ignores users with no geographic data (Fixes Line 27 Coverage)."""
+    """Ensure the aggregation task safely ignores users with no geographic data."""
     # Create a user with NO country or state
     LeaderboardEntry.objects.create(
         username="GhostPlayer", 
@@ -305,7 +306,11 @@ def test_api_sanitizes_profanity(client):
         "determination_gained": 10
     }
     
-    response = client.post("/api/leaderboard/submit", data=json.dumps(payload), content_type="application/json")
+    response = client.post(
+        "/api/leaderboard/submit", 
+        data=json.dumps(payload), 
+        content_type="application/json"
+    )
     assert response.status_code == 200
     
     entry = LeaderboardEntry.objects.last()
@@ -323,8 +328,12 @@ def test_api_sanitizes_zalgo_and_emojis(client):
         "determination_gained": 10
     }
     
-    client.post("/api/leaderboard/submit", data=json.dumps(payload), content_type="application/json")
-    
+    client.post(
+        "/api/leaderboard/submit", 
+        data=json.dumps(payload), 
+        content_type="application/json"
+    )
+        
     entry = LeaderboardEntry.objects.last()
     # The regex should have killed the fire emoji and the symbols
     assert entry.username == "MathGod"
@@ -340,8 +349,12 @@ def test_api_truncates_long_names(client):
         "determination_gained": 10
     }
     
-    client.post("/api/leaderboard/submit", data=json.dumps(payload), content_type="application/json")
-    
+    client.post(
+        "/api/leaderboard/submit", 
+        data=json.dumps(payload), 
+        content_type="application/json"
+    )
+        
     entry = LeaderboardEntry.objects.last()
     assert len(entry.username) == 15
     assert entry.username == "ThisNameIsWayTo"
@@ -357,7 +370,11 @@ def test_api_handles_ghost_names(client):
         "determination_gained": 10
     }
     
-    client.post("/api/leaderboard/submit", data=json.dumps(payload), content_type="application/json")
+    client.post(
+        "/api/leaderboard/submit", 
+        data=json.dumps(payload), 
+        content_type="application/json"
+    )
     
     entry = LeaderboardEntry.objects.last()
     assert entry.username == "Anonymous"
@@ -375,7 +392,11 @@ def test_api_enforces_integer_boundaries(client):
         "determination_gained": 10
     }
     
-    response = client.post("/api/leaderboard/submit", data=json.dumps(payload), content_type="application/json")
-    
+    response = client.post(
+        "/api/leaderboard/submit", 
+        data=json.dumps(payload), 
+        content_type="application/json"
+    )
+        
     # 422 Unprocessable Entity confirms Ninja blocked it before hitting PostgreSQL
     assert response.status_code == 422

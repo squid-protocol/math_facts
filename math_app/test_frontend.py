@@ -1,8 +1,9 @@
 import os
+
 import pytest
 from playwright.sync_api import Page, expect
 
-# Tell Django it's okay to run synchronous database commands while Playwright's async loop is running
+# Tell Django it's okay to run sync DB commands while Playwright's async loop is running
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 # Tell pytest to boot up the Django live server port before running the browser
