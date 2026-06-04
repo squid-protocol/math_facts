@@ -1,4 +1,4 @@
-.github/dependabot.ymlversion: 2
+version: 2
 updates:
   # Check Python dependencies
   - package-ecosystem: "pip"
