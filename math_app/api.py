@@ -1,30 +1,54 @@
 from ninja import NinjaAPI, Schema
-from typing import List, Dict, Any
-from .models import MathProgress
+from typing import Optional
+from .models import LeaderboardEntry
 
 api = NinjaAPI()
 
-class ProgressPayload(Schema):
-    history: List[Any] = []
-    unlocked_numbers: List[int] = []
-    unlock_sequence: List[Any] = []
-    settings: Dict[str, Any] = {}
-    determination_score: int = 0
-
-@api.get("/progress/{player_id}", response=ProgressPayload)
-def get_progress(request, player_id: str):
-    progress, created = MathProgress.objects.get_or_create(player_id=player_id)
-    return progress
-
-@api.post("/progress/{player_id}")
-def save_progress(request, player_id: str, payload: ProgressPayload):
-    progress, created = MathProgress.objects.get_or_create(player_id=player_id)
+class LeaderboardPayload(Schema):
+    # Optional fields default to None if not provided
+    device_id: Optional[str] = None
+    username: str
+    age_bracket: Optional[str] = None
+    country: Optional[str] = None
+    state: Optional[str] = None
     
-    progress.history = payload.history
-    progress.unlocked_numbers = payload.unlocked_numbers
-    progress.unlock_sequence = payload.unlock_sequence
-    progress.settings = payload.settings
-    progress.determination_score = payload.determination_score
-    progress.save()
+    determination_score: int
+    mastery_score: int
+    player_level: int
     
-    return {"success": True, "message": "Synced to cloud"}
+    session_duration_seconds: int
+    total_questions_answered: int
+    session_accuracy_percent: int
+    
+    levels_gained: int
+    mastery_gained: int
+    determination_gained: int
+
+@api.post("/leaderboard/submit")
+def submit_score(request, payload: LeaderboardPayload):
+    entry = LeaderboardEntry.objects.create(
+        device_id=payload.device_id,
+        username=payload.username,
+        age_bracket=payload.age_bracket,
+        country=payload.country,
+        state=payload.state,
+        determination_score=payload.determination_score,
+        mastery_score=payload.mastery_score,
+        player_level=payload.player_level,
+        session_duration_seconds=payload.session_duration_seconds,
+        total_questions_answered=payload.total_questions_answered,
+        session_accuracy_percent=payload.session_accuracy_percent,
+        levels_gained=payload.levels_gained,
+        mastery_gained=payload.mastery_gained,
+        determination_gained=payload.determination_gained
+    )
+    return {"success": True, "message": "Score submitted successfully!", "entry_id": entry.id}
+
+@api.get("/leaderboard/data")
+def get_leaderboard_data(request):
+    # .values() grabs exactly the fields we need without loading heavy model instances
+    entries = LeaderboardEntry.objects.all().values(
+        'username', 'age_bracket', 'country', 'state',
+        'determination_score', 'mastery_score', 'player_level'
+    )
+    return {"data": list(entries)}
