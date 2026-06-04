@@ -1,7 +1,7 @@
 import re
 from typing import Optional
-from better_profanity import profanity
 
+from better_profanity import profanity
 from ninja import NinjaAPI, Schema
 from pydantic import Field
 
