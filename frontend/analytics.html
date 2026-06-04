@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastMathFacts - Global Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body class="bg-slate-100 flex items-start justify-center min-h-screen p-4 font-sans pt-20 pb-24">
+
+    {% include 'components/navbar.html' %}
+
+{% verbatim %}
+    <div id="app" class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
+        
+        <div class="lg:col-span-12 bg-indigo-900 rounded-2xl shadow-md border border-indigo-700 p-6 flex justify-between items-center text-white">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight flex items-center gap-3">
+                    📊 Global Bragging Rights
+                </h1>
+                <p class="text-indigo-300 font-bold mt-1 text-sm">Tracking mathematical fluency and determination across demographics.</p>
+            </div>
+            <a href="/" class="bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded-xl font-bold transition shadow-sm text-sm">
+                ← Back to Practice
+            </a>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col lg:col-span-5 h-[800px]">
+            <div class="bg-slate-800 p-6 text-white">
+                <h2 class="text-xl font-black tracking-tight mb-4">Leaderboard</h2>
+                
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sort Metric</label>
+                        <select v-model="sortBy" class="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm font-bold focus:outline-none border border-slate-600">
+                            <option value="mastery_score">Mastery (Speed)</option>
+                            <option value="determination_score">Determination (Grit)</option>
+                            <option value="player_level">Highest Level Reached</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Age Filter</label>
+                        <select v-model="filterAge" class="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm font-bold focus:outline-none border border-slate-600">
+                            <option value="ALL">All Ages</option>
+                            <option value="under_10">Under 10</option>
+                            <option value="10_13">10 to 13</option>
+                            <option value="14_17">14 to 17</option>
+                            <option value="18_19">18 to 19</option>
+                            <option value="20_29">20 to 29</option>
+                            <option value="30_39">30 to 39</option>
+                            <option value="40_49">40 to 49</option>
+                            <option value="50_59">50 to 59</option>
+                            <option value="60_69">60 to 69</option>
+                            <option value="70_79">70 to 79</option>
+                            <option value="80_plus">80+</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto flex-grow p-4 space-y-2 bg-slate-50">
+                <div v-for="(entry, index) in filteredAndSortedEntries" :key="index" 
+                     class="bg-white border border-slate-200 rounded-xl p-4 flex items-center shadow-sm transition hover:shadow-md">
+                    <div class="w-8 font-black text-slate-300 text-xl">{{ index + 1 }}</div>
+                    <div class="flex-grow">
+                        <div class="font-black text-slate-800 text-lg">{{ entry.username }}</div>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            {{ formatAge(entry.age_bracket) }} • {{ entry.state ? entry.state + ', ' : '' }}{{ entry.country || 'Unknown' }}
+                        </div>
+                    </div>
+                    <div class="text-right flex gap-3">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[9px] font-black uppercase text-indigo-400 tracking-widest">Mastery</span>
+                            <span class="font-mono font-black text-emerald-500">{{ entry.mastery_score }}</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[9px] font-black uppercase text-amber-500 tracking-widest">Determination</span>
+                            <span class="font-mono font-black text-amber-500">{{ entry.determination_score }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="filteredAndSortedEntries.length === 0" class="text-center py-10 font-bold text-slate-400">
+                    No data matches these filters.
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col lg:col-span-7 h-[800px]">
+            <div class="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h2 class="text-xl font-black text-slate-800">Telemetry Visualizations</h2>
+                <div class="bg-slate-200 p-1 rounded-lg flex gap-1">
+                    <button @click="activeGraph = 'age'" :class="activeGraph === 'age' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md font-bold text-sm transition">Age Demographics</button>
+                    <button @click="activeGraph = 'map'" :class="activeGraph === 'map' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md font-bold text-sm transition">Geographic Heatmap</button>
+                </div>
+            </div>
+
+            <div class="flex-grow p-6 relative flex flex-col">
+                <div class="flex justify-end mb-4 gap-3">
+                    <div v-show="activeGraph === 'map'" class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Region:</span>
+                        <select v-model="mapRegion" @change="drawCharts" class="bg-transparent text-indigo-700 font-black text-sm focus:outline-none cursor-pointer">
+                            <option value="world">World</option>
+                            <option value="US">United States</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Metric:</span>
+                        <select v-model="graphMetric" @change="drawCharts" class="bg-transparent text-indigo-700 font-black text-sm focus:outline-none cursor-pointer">
+                            <option value="mastery_score">Mastery</option>
+                            <option value="determination_score">Determination</option>
+                            <option value="player_level">Highest Level</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div v-show="activeGraph === 'age'" id="age_chart" class="flex-grow w-full h-full"></div>
+                <div v-show="activeGraph === 'map'" id="geo_chart" class="flex-grow w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-inner"></div>
+            </div>
+        </div>
+
+    </div>
+{% endverbatim %}
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    entries: [],
+                    sortBy: 'mastery_score',
+                    filterAge: 'ALL',
+                    activeGraph: 'map',
+                    graphMetric: 'mastery_score',
+                    mapRegion: 'world',
+                    chartsLoaded: false
+                }
+            },
+            computed: {
+                filteredAndSortedEntries() {
+                    let result = this.entries;
+
+                    if (this.filterAge !== 'ALL') {
+                        result = result.filter(e => e.age_bracket === this.filterAge);
+                    }
+
+                    return result.sort((a, b) => b[this.sortBy] - a[this.sortBy]);
+                }
+            },
+            watch: {
+                filteredAndSortedEntries() {
+                    if (this.chartsLoaded) this.drawCharts();
+                },
+                activeGraph() {
+                    if (this.chartsLoaded) {
+                        // Tiny delay to ensure the div is visible before drawing
+                        setTimeout(this.drawCharts, 50);
+                    }
+                }
+            },
+            methods: {
+                formatAge(key) {
+                    const map = {
+                        'under_10': 'Under 10', '10_13': '10-13', '14_17': '14-17', 
+                        '18_19': '18-19', '20_29': '20-29', '30_39': '30-39', 
+                        '40_49': '40-49', '50_59': '50-59', '60_69': '60-69', 
+                        '70_79': '70-79', '80_plus': '80+'
+                    };
+                    return map[key] || 'Unspecified Age';
+                },
+
+                async fetchLeaderboard() {
+                    try {
+                        const response = await fetch('/api/leaderboard/data');
+                        const data = await response.json();
+                        this.entries = data.data;
+                    } catch (err) {
+                        console.error("Failed to load analytics", err);
+                    }
+                },
+
+                initGoogleCharts() {
+                    google.charts.load('current', {
+                        'packages':['corechart', 'geochart']
+                    });
+                    google.charts.setOnLoadCallback(() => {
+                        this.chartsLoaded = true;
+                        this.drawCharts();
+                    });
+                },
+
+                drawCharts() {
+                    if (!this.chartsLoaded || this.entries.length === 0) return;
+                    
+                    // Only draw the chart that is currently visible to prevent SVG dimension crashes
+                    if (this.activeGraph === 'age') {
+                        this.drawAgeChart();
+                    } else if (this.activeGraph === 'map') {
+                        this.drawGeoChart();
+                    }
+                },
+
+                drawAgeChart() {
+                    // Group data by age
+                    const ageGroups = {};
+                    this.filteredAndSortedEntries.forEach(entry => {
+                        const age = this.formatAge(entry.age_bracket);
+                        if (!ageGroups[age]) ageGroups[age] = { sum: 0, count: 0 };
+                        ageGroups[age].sum += entry[this.graphMetric];
+                        ageGroups[age].count += 1;
+                    });
+
+                    const dataArray = [['Age Bracket', 'Average Score']];
+                    for (const [age, stats] of Object.entries(ageGroups)) {
+                        dataArray.push([age, Math.round(stats.sum / stats.count)]);
+                    }
+
+                    if (dataArray.length === 1) return; // No data
+
+                    const data = google.visualization.arrayToDataTable(dataArray);
+                    
+                    const titleMap = {
+                        'mastery_score': 'MASTERY',
+                        'determination_score': 'DETERMINATION',
+                        'player_level': 'LEVEL'
+                    };
+                    
+                    const options = {
+                        title: `Average ${titleMap[this.graphMetric] || 'SCORE'} by Age`,
+                        colors: ['#4f46e5'],
+                        legend: { position: 'none' },
+                        // Hardcode a 90px left margin to give the age labels room to breathe
+                        chartArea: { left: 90, top: 40, width: '75%', height: '70%' },
+                        // Shrink the bars to 50% of their available slot to make them thinner
+                        bar: { groupWidth: '50%' },
+                        hAxis: { 
+                            title: 'Average Score', 
+                            minValue: 0,
+                            textStyle: { fontSize: 10, color: '#64748b' }
+                        },
+                        vAxis: { 
+                            title: 'Age Group',
+                            // Bump up the label font and make it bold
+                            textStyle: { fontSize: 12, bold: true, color: '#334155' }
+                        }
+                    };
+
+                    const chart = new google.visualization.BarChart(document.getElementById('age_chart'));
+                    chart.draw(data, options);
+                },
+
+                drawGeoChart() {
+                    const geoGroups = {};
+                    
+                    this.filteredAndSortedEntries.forEach(entry => {
+                        let location;
+                        
+                        if (this.mapRegion !== 'world') {
+                            // Zoomed into a specific country
+                            if (entry.country === this.mapRegion && entry.state) {
+                                location = entry.country + '-' + entry.state;
+                            } else {
+                                return; // Skip data outside this zoomed country
+                            }
+                        } else {
+                            // Plot entire countries for the world view
+                            location = entry.country;
+                        }
+                            
+                        if (!location) return;
+
+                        if (!geoGroups[location]) geoGroups[location] = { sum: 0, count: 0 };
+                        geoGroups[location].sum += entry[this.graphMetric];
+                        geoGroups[location].count += 1;
+                    });
+
+                    const dataArray = [['Location', 'Average Score']];
+                    for (const [loc, stats] of Object.entries(geoGroups)) {
+                        dataArray.push([loc, Math.round(stats.sum / stats.count)]);
+                    }
+
+                    // Prevent chart crash if a view has zero data
+                    if (dataArray.length === 1) {
+                        dataArray.push(['No Data', 0]); 
+                    }
+
+                    const data = google.visualization.arrayToDataTable(dataArray);
+                    
+                    // Find the highest score currently visible on the map
+                    // Added a fallback to 0 in case the map is totally empty
+                    const dataValues = Object.values(geoGroups).map(g => g.sum / g.count);
+                    const dataMax = dataValues.length > 0 ? Math.max(...dataValues) : 0;
+                    
+                    // Self-Normalizing LUT: Adjust the baseline ceiling based on the metric chosen
+                    const baselineMax = this.graphMetric === 'player_level' ? 12 : 5000;
+                    const dynamicMax = Math.max(baselineMax, dataMax);
+                    
+                    const options = {
+                        region: this.mapRegion === 'world' ? 'world' : this.mapRegion,
+                        resolution: this.mapRegion === 'world' ? 'countries' : 'provinces',
+                        colorAxis: {
+                            minValue: 0,
+                            maxValue: dynamicMax,
+                            colors: [
+                                '#dc2626', // Red (Worst)
+                                '#f97316', // Orange
+                                '#facc15', // Yellow
+                                '#22c55e', // Green
+                                '#10b981', // Emerald
+                                '#14b8a6', // Teal
+                                '#06b6d4', // Cyan
+                                '#3b82f6', // Blue
+                                '#6366f1', // Indigo
+                                '#a855f7', // Purple
+                                '#ec4899'  // Pink (Best)
+                            ]
+                        },
+                        backgroundColor: '#f8fafc',
+                        datalessRegionColor: '#f1f5f9',
+                        defaultColor: '#f5f5f5',
+                    };
+
+                    const chart = new google.visualization.GeoChart(document.getElementById('geo_chart'));
+                    
+                    // The Magic Zoom Click Listener
+                    google.visualization.events.addListener(chart, 'regionClick', (eventData) => {
+                        if (this.mapRegion === 'world') {
+                            this.mapRegion = eventData.region;
+                            this.drawCharts();
+                        }
+                    });
+
+                    chart.draw(data, options);
+                }
+            },
+            async mounted() {
+                await this.fetchLeaderboard();
+                this.initGoogleCharts();
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

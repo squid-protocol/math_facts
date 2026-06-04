@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Telemetry - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body class="bg-slate-950 flex items-start justify-center min-h-screen p-8 pt-20 font-sans">
+
+    {% include 'components/navbar.html' %}
+
+    <div id="app" class="max-w-7xl w-full">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-white flex items-center gap-3">
+                    ⚙️ Core Telemetry
+                </h1>
+                <p class="text-slate-500 font-bold mt-2">Real-time system load and instructional efficacy.</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="/analytics/" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-bold transition border border-slate-700 text-sm">Public Analytics</a>
+                <a href="/admin/" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold transition shadow-lg text-sm">Database Admin</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl">
+                <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Total Unique Users</span>
+                <div class="text-3xl font-black text-white mt-1">{{ total_users }}</div>
+            </div>
+            <div class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl">
+                <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Avg Time / Session</span>
+                <div class="text-3xl font-black text-white mt-1">{{ avg_time_minutes }}<span class="text-sm text-slate-500 ml-1">min</span></div>
+            </div>
+            <div class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl">
+                <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Avg Q's / Session</span>
+                <div class="text-3xl font-black text-white mt-1">{{ avg_questions }}</div>
+            </div>
+            <div class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl">
+                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Avg Accuracy</span>
+                <div class="text-3xl font-black text-white mt-1">{{ avg_accuracy }}%</div>
+            </div>
+            <div class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl col-span-2 md:col-span-1">
+                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Avg Mastery Gain</span>
+                <div class="text-3xl font-black text-emerald-400 mt-1">+{{ avg_mastery_gain }}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl lg:col-span-2 flex flex-col h-[400px]">
+                <div class="mb-2">
+                    <h2 class="text-lg font-black text-white">System Pulse (Traffic Over Time)</h2>
+                    <p class="text-xs text-slate-500 font-bold">Volume of practice sessions submitted per day.</p>
+                </div>
+                <div id="timeline_chart" class="flex-grow w-full"></div>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl flex flex-col h-[450px]">
+                <div class="mb-2">
+                    <h2 class="text-lg font-black text-white">Instructional Efficacy</h2>
+                    <p class="text-xs text-slate-500 font-bold">Average mastery points gained per session, sorted by age.</p>
+                </div>
+                <div id="age_chart" class="flex-grow w-full"></div>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl flex flex-col h-[450px]">
+                <div class="mb-2 flex justify-between items-start">
+                    <div>
+                        <h2 class="text-lg font-black text-white">Global User Distribution</h2>
+                        <p class="text-xs text-slate-500 font-bold">Total volume of practice sessions by region.</p>
+                    </div>
+                </div>
+                <div id="geo_chart" class="flex-grow w-full mt-2 rounded-xl overflow-hidden border border-slate-800"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script id="telemetry-data" type="application/json">
+        {{ chart_data_json|safe }}
+    </script>
+
+ <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    telemetry: [],
+                    chartsLoaded: false
+                }
+            },
+            methods: {
+                initGoogleCharts() {
+                    google.charts.load('current', {'packages':['corechart', 'geochart']});
+                    google.charts.setOnLoadCallback(() => {
+                        this.chartsLoaded = true;
+                        this.drawCharts();
+                    });
+                },
+                drawCharts() {
+                    if (!this.chartsLoaded || this.telemetry.length === 0) return;
+                    this.drawTimeline();
+                    this.drawAgeChart();
+                    this.drawGeoChart();
+                },
+                getDarkThemeOptions() {
+                    return {
+                        backgroundColor: 'transparent',
+                        legend: { position: 'none' },
+                        chartArea: { width: '85%', height: '75%' },
+                        hAxis: { textStyle: { color: '#64748b', fontSize: 10 }, gridlines: { color: 'transparent' } },
+                        vAxis: { textStyle: { color: '#64748b', fontSize: 10 }, gridlines: { color: '#1e293b' } }
+                    };
+                },
+                
+                // 1. TIMELINE CHART
+                drawTimeline() {
+                    const dates = {};
+                    this.telemetry.forEach(t => {
+                        // Extract YYYY-MM-DD
+                        const date = t.timestamp.split('T')[0]; 
+                        dates[date] = (dates[date] || 0) + 1;
+                    });
+
+                    // Sort chronologically
+                    const sortedDates = Object.keys(dates).sort();
+                    const dataArray = [['Date', 'Sessions']];
+                    sortedDates.forEach(d => dataArray.push([d, dates[d]]));
+
+                    if (dataArray.length <= 1) return;
+
+                    const data = google.visualization.arrayToDataTable(dataArray);
+                    const options = this.getDarkThemeOptions();
+                    options.colors = ['#6366f1']; // Indigo
+                    options.areaOpacity = 0.2;
+
+                    const chart = new google.visualization.AreaChart(document.getElementById('timeline_chart'));
+                    chart.draw(data, options);
+                },
+
+                // 2. AGE CHART
+                drawAgeChart() {
+                    const ages = {};
+                    this.telemetry.forEach(t => {
+                        let age = t.age_bracket || 'Unknown';
+                        // Clean up the formatting for the label
+                        age = age.replace('_plus', '+').replace('_', '-');
+                        if (age === 'under-10') age = '< 10';
+                        
+                        if (!ages[age]) ages[age] = { sum: 0, count: 0 };
+                        ages[age].sum += t.mastery_gained;
+                        ages[age].count++;
+                    });
+
+                    const dataArray = [['Age', 'Avg Mastery Gain']];
+                    for (const [age, stats] of Object.entries(ages)) {
+                        dataArray.push([age, Math.round(stats.sum / stats.count)]);
+                    }
+
+                    if (dataArray.length <= 1) return;
+                    const data = google.visualization.arrayToDataTable(dataArray);
+                    
+                    const options = this.getDarkThemeOptions();
+                    options.colors = ['#10b981']; // Emerald
+
+                    const chart = new google.visualization.ColumnChart(document.getElementById('age_chart'));
+                    chart.draw(data, options);
+                },
+
+                // 3. GEO CHART
+                drawGeoChart() {
+                    const locations = {};
+                    let hasUS = false;
+                    
+                    this.telemetry.forEach(t => {
+                        let loc = t.country === 'US' && t.state ? 'US-' + t.state : t.country;
+                        if (!loc) return;
+                        if (loc.startsWith('US-')) hasUS = true;
+                        
+                        if (!locations[loc]) locations[loc] = 0;
+                        locations[loc]++;
+                    });
+
+                    const dataArray = [['Location', 'Sessions']];
+                    for (const [loc, count] of Object.entries(locations)) {
+                        dataArray.push([loc, count]);
+                    }
+
+                    if (dataArray.length <= 1) return;
+                    const data = google.visualization.arrayToDataTable(dataArray);
+                    
+                    const options = this.getDarkThemeOptions();
+                    options.colorAxis = {colors: ['#334155', '#6366f1']}; // Slate to Indigo
+                    options.datalessRegionColor = '#0f172a';
+                    options.defaultColor = '#1e293b';
+                    
+                    if (hasUS) {
+                        options.region = 'US';
+                        options.resolution = 'provinces';
+                    }
+
+                    const chart = new google.visualization.GeoChart(document.getElementById('geo_chart'));
+                    chart.draw(data, options);
+                }
+            },
+            mounted() {
+                // Parse the data safely injected by Django
+                const rawData = document.getElementById('telemetry-data').textContent;
+                if (rawData && rawData.trim() !== '') {
+                    this.telemetry = JSON.parse(rawData);
+                }
+                
+                // Initialize Google Charts
+                this.initGoogleCharts();
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
