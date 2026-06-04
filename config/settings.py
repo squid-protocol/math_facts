@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'math_app', # <--- Add this
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -116,3 +117,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Django Q2 Configuration
+Q_CLUSTER = {
+    'name': 'fastmath_cluster',
+    'workers': 2,
+    'recycle': 500,
+    'timeout': 60,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q',
+    'orm': 'default'  # This is the magic line! It tells Celery-Lite to use your Postgres DB.
+}
