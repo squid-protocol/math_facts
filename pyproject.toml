@@ -1,3 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "math_facts"
+version = "0.1.0"
+description = "FastMathFacts Core Engine"
+
+[tool.setuptools.packages.find]
+# Explicitly tell setuptools which folders contain Python code to package
+include = ["math_app", "config"]
+# Explicitly ignore the frontend templates and Vue directories
+exclude = ["frontend"]
+
 [tool.ruff]
 # Set the line length to 100 (fixes the E501 errors)
 line-length = 100
