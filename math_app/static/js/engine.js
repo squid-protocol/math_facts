@@ -3,8 +3,8 @@ const { createApp } = Vue
 createApp({
     data() {
         return {
-            unlockSequence: [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]],
-            unlockedNumbers: [0, 1, 2],
+            unlockSequence: [[7], [8], [9], [10], [11], [12]],
+            unlockedNumbers: [0, 1, 2, 3, 4, 5, 6],
             
             currentQuestion: { num1: 0, num2: 0 },
             userAnswer: '',
@@ -138,17 +138,17 @@ createApp({
 
         tierDistribution() {
             const tiers = [
-                { id: 'pink', label: '< 0.25s', colorClass: 'bg-gradient-to-br from-pink-400 to-pink-600 animate-metal-pulse', count: 0 },
-                { id: 'purple', label: '< 0.5s', colorClass: 'bg-gradient-to-br from-purple-400 to-purple-600 animate-metal-pulse', count: 0 },
-                { id: 'indigo', label: '< 0.75s', colorClass: 'bg-gradient-to-br from-indigo-400 to-indigo-600 animate-metal-pulse', count: 0 },
-                { id: 'blue', label: '< 1s', colorClass: 'bg-gradient-to-br from-blue-400 to-blue-600 animate-metal-pulse', count: 0 },
-                { id: 'cyan', label: '< 2s', colorClass: 'bg-cyan-500', count: 0 },
-                { id: 'teal', label: '< 3s', colorClass: 'bg-teal-500', count: 0 },
-                { id: 'emerald', label: '< 4s', colorClass: 'bg-emerald-500', count: 0 },
-                { id: 'green', label: '< 5s', colorClass: 'bg-green-500', count: 0 },
-                { id: 'yellow', label: '< 6s', colorClass: 'bg-yellow-400', count: 0 },
-                { id: 'orange', label: '< 8s', colorClass: 'bg-orange-500', count: 0 },
-                { id: 'red', label: '> 8s', colorClass: 'bg-red-600', count: 0 }
+                { id: 'pink', label: '0.25s', colorClass: 'bg-gradient-to-br from-pink-400 to-pink-600 animate-metal-pulse', count: 0 },
+                { id: 'purple', label: '0.5s', colorClass: 'bg-gradient-to-br from-purple-400 to-purple-600 animate-metal-pulse', count: 0 },
+                { id: 'indigo', label: '0.75s', colorClass: 'bg-gradient-to-br from-indigo-400 to-indigo-600 animate-metal-pulse', count: 0 },
+                { id: 'blue', label: '1s', colorClass: 'bg-gradient-to-br from-blue-400 to-blue-600 animate-metal-pulse', count: 0 },
+                { id: 'cyan', label: '2s', colorClass: 'bg-cyan-500', count: 0 },
+                { id: 'teal', label: '3s', colorClass: 'bg-teal-500', count: 0 },
+                { id: 'emerald', label: '4s', colorClass: 'bg-emerald-500', count: 0 },
+                { id: 'green', label: '5s', colorClass: 'bg-green-500', count: 0 },
+                { id: 'yellow', label: '6s', colorClass: 'bg-yellow-400', count: 0 },
+                { id: 'orange', label: '8s', colorClass: 'bg-orange-500', count: 0 },
+                { id: 'red', label: '8s+', colorClass: 'bg-red-600', count: 0 }
             ];
 
             const countedKeys = new Set();
@@ -222,8 +222,8 @@ createApp({
 
         dynamicWindowSize() {
             const base = this.windowSize || 10;
-            const extra = (this.unlockedNumbers.length - 3) * 15;
-            return Math.min(100, base + Math.max(0, extra));
+            const extra = (this.unlockedNumbers.length - 7) * 5;
+            return Math.min(50, base + Math.max(0, extra));
         },
 
         recentAttempts() { return this.history.slice(-this.dynamicWindowSize); },
@@ -258,8 +258,8 @@ createApp({
             
             // Wipe the state clean so we don't bleed data between profiles
             this.history = [];
-            this.unlockedNumbers = [0, 1, 2];
-            this.unlockSequence = [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]];
+            this.unlockedNumbers = [0, 1, 2, 3, 4, 5, 6];
+            this.unlockSequence = [[7], [8], [9], [10], [11], [12]];
             this.determinationScore = 0;
             
             this.loadData();
@@ -492,8 +492,8 @@ createApp({
                 
                 this.history = [];
                 this.determinationScore = 0;
-                this.unlockedNumbers = [0, 1, 2];
-                this.unlockSequence = [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12]];
+                this.unlockedNumbers = [0, 1, 2, 3, 4, 5, 6];
+                this.unlockSequence = [[7], [8], [9], [10], [11], [12]];
                 this.generateQuestion();
                 this.currentView = 'game';
             }
