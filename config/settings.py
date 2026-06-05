@@ -35,7 +35,7 @@ SECRET_KEY = "django-insecure-l!82j0ij@r5z4$3ocnv)94f*i_d30hf*2^t2w8-+s=wd0)6-^q
 DEBUG = os.environ.get("DEBUG") == "True"
 
 ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "fastmathfacts.io,www.fastmathfacts.io,134.122.119.156"
+    "ALLOWED_HOSTS", "fastmathfacts.io,www.fastmathfacts.io,134.122.119.156,127.0.0.1,localhost"
 ).split(",")
 
 # Application definition
