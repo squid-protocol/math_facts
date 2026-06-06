@@ -1,3 +1,55 @@
+const QuestionFactory = {
+    create(config, context) {
+        if (config.type === 'multiplication') {
+            return this.buildMultiplication(context);
+        }
+        throw new Error("Unknown generator type: " + config.type);
+    },
+
+    buildMultiplication(context) {
+        let n1 = 0;
+        let n2 = 0;
+
+        if (context.gameMode === 'total') {
+            const maxIndex = context.gridColumns.length;
+            n1 = Math.floor(Math.random() * maxIndex);
+            n2 = Math.floor(Math.random() * maxIndex);
+        } else if (context.gameMode === 'weak' && context.weakSpots.length > 0) {
+            const spot = context.weakSpots[Math.floor(Math.random() * context.weakSpots.length)];
+            n1 = spot[0];
+            n2 = spot[1];
+        } else {
+            const r = Math.random();
+            if (r <= 0.50 && context.untestedPairs.length > 0) {
+                const spot = context.untestedPairs[Math.floor(Math.random() * context.untestedPairs.length)];
+                n1 = spot[0];
+                n2 = spot[1];
+            } else if (r > 0.75 && context.weakSpots.length > 0) {
+                const spot = context.weakSpots[Math.floor(Math.random() * context.weakSpots.length)];
+                n1 = spot[0];
+                n2 = spot[1];
+            } else {
+                const poolIndex1 = Math.floor(Math.random() * context.unlockedNumbers.length);
+                const poolIndex2 = Math.floor(Math.random() * context.unlockedNumbers.length);
+                n1 = context.unlockedNumbers[poolIndex1];
+                n2 = context.unlockedNumbers[poolIndex2];
+            }
+        }
+
+        const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
+        const min = Math.min(n1, n2);
+        const max = Math.max(n1, n2);
+
+        return {
+            num1: displayOrder[0],
+            num2: displayOrder[1],
+            displayString: `${displayOrder[0]} × ${displayOrder[1]}`,
+            correctAnswer: n1 * n2,
+            trackingKey: `${min}x${max}`
+        };
+    }
+};
+
 const { createApp } = Vue
 
 createApp({
@@ -6,7 +58,7 @@ createApp({
             unlockSequence: [[7], [8], [9], [10], [11], [12]],
             unlockedNumbers: [0, 1, 2, 3, 4, 5, 6],
             
-            currentQuestion: { num1: 0, num2: 0 },
+            currentQuestion: { num1: 0, num2: 0, displayString: '', correctAnswer: 0, trackingKey: '' },
             userAnswer: '',
             accumulatedTimeMs: 0,
             currentSegmentStartTime: 0,
@@ -568,53 +620,26 @@ createApp({
         
         generateQuestion() {
             this.resetIdleTimer();
-            let n1 = 0;
-            let n2 = 0;
 
-            if (this.gameMode === 'total') {
-                const maxIndex = this.gridColumns.length;
-                n1 = Math.floor(Math.random() * maxIndex);
-                n2 = Math.floor(Math.random() * maxIndex);
-            } else if (this.gameMode === 'weak') {
-                const weakSpots = this.getWeakSpots();
-                if (weakSpots.length > 0) {
-                    const spot = weakSpots[Math.floor(Math.random() * weakSpots.length)];
-                    n1 = spot[0];
-                    n2 = spot[1];
-                } else {
-                    const poolIndex1 = Math.floor(Math.random() * this.unlockedNumbers.length);
-                    const poolIndex2 = Math.floor(Math.random() * this.unlockedNumbers.length);
-                    n1 = this.unlockedNumbers[poolIndex1];
-                    n2 = this.unlockedNumbers[poolIndex2];
-                }
-            } else {
-                const r = Math.random();
-                const untested = this.getUntestedPairs();
-                const weakSpots = this.getWeakSpots();
+            const context = {
+                gameMode: this.gameMode,
+                gridColumns: this.gridColumns,
+                weakSpots: this.getWeakSpots(),
+                untestedPairs: this.getUntestedPairs(),
+                unlockedNumbers: this.unlockedNumbers
+            };
 
-                if (r <= 0.50 && untested.length > 0) {
-                    const spot = untested[Math.floor(Math.random() * untested.length)];
-                    n1 = spot[0];
-                    n2 = spot[1];
-                } else if (r > 0.75 && weakSpots.length > 0) {
-                    const spot = weakSpots[Math.floor(Math.random() * weakSpots.length)];
-                    n1 = spot[0];
-                    n2 = spot[1];
-                } else {
-                    const poolIndex1 = Math.floor(Math.random() * this.unlockedNumbers.length);
-                    const poolIndex2 = Math.floor(Math.random() * this.unlockedNumbers.length);
-                    n1 = this.unlockedNumbers[poolIndex1];
-                    n2 = this.unlockedNumbers[poolIndex2];
-                }
-            }
+            const activeModuleConfig = {
+                type: 'multiplication'
+            };
+
+            const question = QuestionFactory.create(activeModuleConfig, context);
             
-            if (Math.random() > 0.5) {
-                this.currentQuestion.num1 = n1;
-                this.currentQuestion.num2 = n2;
-            } else {
-                this.currentQuestion.num1 = n2;
-                this.currentQuestion.num2 = n1;
-            }
+            this.currentQuestion.num1 = question.num1;
+            this.currentQuestion.num2 = question.num2;
+            this.currentQuestion.displayString = question.displayString;
+            this.currentQuestion.correctAnswer = question.correctAnswer;
+            this.currentQuestion.trackingKey = question.trackingKey;
             
             this.userAnswer = '';
             this.feedback = null;
@@ -622,7 +647,6 @@ createApp({
             this.accumulatedTimeMs = 0;
             this.currentSegmentStartTime = performance.now();
             this.isPaused = false;
-        
         },
         
         resetIdleTimer() {
@@ -674,12 +698,12 @@ createApp({
 
             const totalTimeMs = this.accumulatedTimeMs + (performance.now() - this.currentSegmentStartTime);
             const timeTakenSeconds = (totalTimeMs / 1000).toFixed(2);
-            const correctAnswer = this.currentQuestion.num1 * this.currentQuestion.num2;
+            
+            const correctAnswer = this.currentQuestion.correctAnswer;
             const isCorrect = parseInt(this.userAnswer) === correctAnswer;
 
-            const min = Math.min(this.currentQuestion.num1, this.currentQuestion.num2);
-            const max = Math.max(this.currentQuestion.num1, this.currentQuestion.num2);
-            const key = `${min}x${max}`;
+            const key = this.currentQuestion.trackingKey;
+            
             const oldStat = this.bestPairStatsMap[key];
             const oldBestSpeed = (oldStat && oldStat.attempts > 0) ? parseFloat(oldStat.speed) : 10.0;
 
