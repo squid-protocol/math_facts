@@ -39,6 +39,7 @@ class LeaderboardPayload(Schema):
     # Enforce string length limits matching the database max_length
     device_id: Optional[str] = Field(None, max_length=100)
     username: str = Field(..., max_length=100)
+    module_type: str = Field(default="multiplication", max_length=50)
     age_bracket: Optional[str] = Field(None, max_length=20)
     country: Optional[str] = Field(None, max_length=100)
     state: Optional[str] = Field(None, max_length=50)
@@ -67,6 +68,7 @@ def submit_score(request, payload: LeaderboardPayload):
     entry = LeaderboardEntry.objects.create(
         device_id=payload.device_id,
         username=clean_username,
+        module_type=payload.module_type,
         age_bracket=payload.age_bracket,
         country=payload.country,
         state=payload.state,
@@ -92,6 +94,7 @@ def get_leaderboard_data(request):
     # .values() grabs exactly the fields we need without loading heavy model instances
     entries = LeaderboardEntry.objects.all().values(
         "username",
+        "module_type",
         "age_bracket",
         "country",
         "state",

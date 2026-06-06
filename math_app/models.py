@@ -5,6 +5,9 @@ class LeaderboardEntry(models.Model):
     # Device Identity (For tracking longitudinal growth)
     device_id = models.CharField(max_length=100, null=True, blank=True)
 
+    # Context (Which engine generated these points?)
+    module_type = models.CharField(max_length=50, default="multiplication")
+
     # Demographics
     username = models.CharField(max_length=100)
     age_bracket = models.CharField(max_length=20, null=True, blank=True)
@@ -35,6 +38,7 @@ class LeaderboardEntry(models.Model):
 class AnalyticsSummary(models.Model):
     country = models.CharField(max_length=5, blank=True, null=True)
     state = models.CharField(max_length=10, blank=True, null=True)
+    module_type = models.CharField(max_length=50, default="multiplication")
 
     avg_mastery = models.IntegerField(default=0)
     avg_determination = models.IntegerField(default=0)
@@ -44,8 +48,8 @@ class AnalyticsSummary(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # This ensures we only have one summary row per geographic region
-        unique_together = ("country", "state")
+        # This ensures we only have one summary row per geographic region and module
+        unique_together = ("country", "state", "module_type")
 
     def __str__(self):
-        return f"{self.country} - {self.state}"
+        return f"{self.country} - {self.state} ({self.module_type})"
