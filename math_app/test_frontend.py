@@ -10,14 +10,14 @@ os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 pytestmark = pytest.mark.django_db
 
 
-def test_engine_calculator_flow(page: Page, live_server):
+def test_engine_calculator_flow(page: Page):
     """Boot the browser, navigate to the engine, and simulate a math problem."""
 
-    # 1. Navigate to your local Django server
-    page.goto(live_server.url)
+    # 1. Navigate to the Vite Dev Server
+    page.goto("http://localhost:5173")
 
     # 2. Assert the Vue app mounted and the title is correct
-    expect(page).to_have_title("FastMathFacts - Engine")
+    expect(page).to_have_title("FastMathFacts")
 
     # 3. Verify the calculator grid loaded (Specifically the active profile heading)
     expect(page.get_by_role("heading", name="Guest")).to_be_visible()
@@ -38,9 +38,9 @@ def test_engine_calculator_flow(page: Page, live_server):
     expect(input_box).to_have_value("")
 
 
-def test_settings_menu_toggle(page: Page, live_server):
+def test_settings_menu_toggle(page: Page):
     """Ensure the user can swap between the game board and the settings panel."""
-    page.goto(live_server.url)
+    page.goto("http://localhost:5173")
 
     # Wait for the main practice view to render
     expect(page.get_by_role("heading", name="Guest")).to_be_visible()
@@ -57,9 +57,9 @@ def test_settings_menu_toggle(page: Page, live_server):
     expect(page.get_by_role("heading", name="Game Mode")).not_to_be_visible()
 
 
-def test_leaderboard_modal_flow(page: Page, live_server):
+def test_leaderboard_modal_flow(page: Page):
     """Ensure the submission modal opens, validates input, and closes."""
-    page.goto(live_server.url)
+    page.goto("http://localhost:5173")
 
     # Click the submit button on the Mastery Dashboard
     page.get_by_role("button", name="Submit to Leaderboard").click()
