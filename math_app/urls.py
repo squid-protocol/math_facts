@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import TemplateView
 
 from . import views
@@ -6,17 +6,7 @@ from . import views
 app_name = "math_app"
 
 urlpatterns = [
-    path("", views.index_view, name="index"),
-    path("analytics/", views.analytics_view, name="analytics"),
     path("utility/", views.utility_dashboard, name="utility_dashboard"),
-    path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
-    path("faq/", TemplateView.as_view(template_name="faq.html"), name="faq"),
-    path(
-        "privacy-policy/",
-        TemplateView.as_view(template_name="privacy.html"),
-        name="privacy",
-    ),
-    path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
     path(
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
@@ -27,4 +17,6 @@ urlpatterns = [
             template_name="sitemap.xml", content_type="application/xml"
         ),
     ),
+    # Catch-all routes everything else to the Vue SPA shell
+    re_path(r"^.*$", views.index_view, name="index"),
 ]

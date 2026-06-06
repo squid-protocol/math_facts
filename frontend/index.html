@@ -4,32 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastMathFacts - Engine</title>
-    
-    <link rel="stylesheet" href="{% static 'css/output.css' %}">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <link rel="stylesheet" href="{% static 'css/engine_effects.css' %}">
-</head>
-<body class="bg-slate-100 flex items-start justify-center min-h-screen p-4 font-sans pt-20 pb-24">
-    
-    {% include 'components/navbar.html' %}
-
-{% verbatim %}
-    <div id="app" class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
-{% endverbatim %}
-        
-        {% include 'components/leaderboard_modal.html' %}
-        {% include 'components/share_modal.html' %}
-        {% include 'components/mastery_dashboard.html' %}
-
-{% include 'components/calculator_engine.html' %}
-
-{% verbatim %}
-    </div>
-{% endverbatim %}
-
-<script src="{% static 'js/engine.js' %}"></script>
+    <title>FastMathFacts</title>
+    </head>
+<body class="bg-slate-100 font-sans">
+    <div id="app"></div>
 </body>
 </html>
