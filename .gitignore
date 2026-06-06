@@ -4,3 +4,4 @@ node_modules/
 *_context.md
 .coverage
 .env
+staticfiles/
