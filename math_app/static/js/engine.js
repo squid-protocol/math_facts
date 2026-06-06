@@ -1,15 +1,17 @@
 const QuestionFactory = {
     create(config, context) {
         if (config.type === 'multiplication') {
-            return this.buildMultiplication(context);
+            return this.buildMultiplication(config, context);
+        }
+        if (config.type === 'addition') {
+            return this.buildAddition(config, context);
         }
         throw new Error("Unknown generator type: " + config.type);
     },
 
-    buildMultiplication(context) {
-        let n1 = 0;
-        let n2 = 0;
-
+    // A helper method to pick the core numbers based on the user's game mode
+    _pickBaseNumbers(context) {
+        let n1 = 0, n2 = 0;
         if (context.gameMode === 'total') {
             const maxIndex = context.gridColumns.length;
             n1 = Math.floor(Math.random() * maxIndex);
@@ -35,17 +37,53 @@ const QuestionFactory = {
                 n2 = context.unlockedNumbers[poolIndex2];
             }
         }
+        return [n1, n2];
+    },
+
+    buildMultiplication(config, context) {
+        let [n1, n2] = this._pickBaseNumbers(context);
+
+        if (config.allowNegatives) {
+            if (Math.random() > 0.5 && n1 !== 0) n1 *= -1;
+            if (Math.random() > 0.5 && n2 !== 0) n2 *= -1;
+        }
 
         const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
+        const n2Str = displayOrder[1] < 0 ? `(${displayOrder[1]})` : `${displayOrder[1]}`;
+        
+        // Preserve the legacy key format "3x4" so users don't lose past data
         const min = Math.min(n1, n2);
         const max = Math.max(n1, n2);
 
         return {
             num1: displayOrder[0],
             num2: displayOrder[1],
-            displayString: `${displayOrder[0]} × ${displayOrder[1]}`,
+            displayString: `${displayOrder[0]} × ${n2Str}`,
             correctAnswer: n1 * n2,
             trackingKey: `${min}x${max}`
+        };
+    },
+
+    buildAddition(config, context) {
+        let [n1, n2] = this._pickBaseNumbers(context);
+
+        if (config.allowNegatives) {
+            if (Math.random() > 0.5 && n1 !== 0) n1 *= -1;
+            if (Math.random() > 0.5 && n2 !== 0) n2 *= -1;
+        }
+
+        const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
+        const n2Str = displayOrder[1] < 0 ? `(${displayOrder[1]})` : `${displayOrder[1]}`;
+        
+        const min = Math.min(n1, n2);
+        const max = Math.max(n1, n2);
+
+        return {
+            num1: displayOrder[0],
+            num2: displayOrder[1],
+            displayString: `${displayOrder[0]} + ${n2Str}`,
+            correctAnswer: n1 + n2,
+            trackingKey: `add_${min}+${max}`
         };
     }
 };
@@ -87,11 +125,11 @@ createApp({
             showLeaderboardModal: false,
             showShareModal: false,
             isSharing: false,
-            submissionState: 'idle', // 'idle' | 'submitting' | 'success' | 'error'
+            submissionState: 'idle', 
             leaderboardForm: { username: '', ageBracket: '', country: '', state: '', consentToTrack: false },
             deviceId: null,
             usStates: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'],
-            allCountries: ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Samoa', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'],
+            allCountries: ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Samoa', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'],
 
             sessionStartTime: Date.now(),
             initialMasteryScore: 0,
@@ -102,6 +140,8 @@ createApp({
             targetSpeed: 3.5,
             targetAccuracy: 90,
             windowSize: 10, 
+            activeModule: 'multiplication',
+            allowNegatives: false,
 
             globalCountries: [],
             availableRegions: [],
@@ -149,7 +189,7 @@ createApp({
             for (const att of this.history) {
                 const min = Math.min(att.num1, att.num2);
                 const max = Math.max(att.num1, att.num2);
-                const key = `${min}x${max}`;
+                const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
                 if (!pairHistory[key]) pairHistory[key] = [];
                 pairHistory[key].push(att);
             }
@@ -208,7 +248,7 @@ createApp({
                 for (const col of this.gridColumns) {
                     const min = Math.min(row, col);
                     const max = Math.max(row, col);
-                    const key = `${min}x${max}`;
+                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
                     
                     if (!countedKeys.has(key)) {
                         countedKeys.add(key);
@@ -245,7 +285,7 @@ createApp({
                 for (const col of this.gridColumns) {
                     const min = Math.min(row, col);
                     const max = Math.max(row, col);
-                    const key = `${min}x${max}`;
+                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
                     
                     if (!countedKeys.has(key)) {
                         countedKeys.add(key);
@@ -291,6 +331,21 @@ createApp({
         }
     },
     methods: {
+        switchModule(newModule) {
+            this.saveData(); // Save progress in current module before swapping
+            this.activeModule = newModule;
+            localStorage.setItem(`fastMathLastModule_${this.activeProfile}`, newModule);
+            
+            // Wipe working memory to prevent bleed-over
+            this.history = [];
+            this.unlockedNumbers = [0, 1, 2, 3, 4, 5, 6];
+            this.unlockSequence = [[7], [8], [9], [10], [11], [12]];
+            this.determinationScore = 0;
+
+            this.loadData();
+            this.generateQuestion();
+        },
+
         confirmAddPlayer() {
             const cleanName = this.newProfileName.trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 15);
             if (cleanName && cleanName !== 'Guest') {
@@ -307,6 +362,10 @@ createApp({
         selectProfile(name) {
             this.activeProfile = name;
             localStorage.setItem('fastMathLastProfile', name);
+            
+            // Check if they were playing Addition or Multiplication last
+            const lastMod = localStorage.getItem(`fastMathLastModule_${name}`);
+            this.activeModule = lastMod ? lastMod : 'multiplication';
             
             // Wipe the state clean so we don't bleed data between profiles
             this.history = [];
@@ -374,7 +433,8 @@ createApp({
         getPairStats(row, col) {
             const min = Math.min(row, col);
             const max = Math.max(row, col);
-            const stat = this.bestPairStatsMap[`${min}x${max}`];
+            const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
+            const stat = this.bestPairStatsMap[key];
             if (!stat) return { attempts: 0 };
             return stat;
         },
@@ -435,8 +495,10 @@ createApp({
         },
 
         loadData() {
-            if (!this.activeProfile) return;
-            const prefix = `math_${this.activeProfile}_`;
+            if (!this.activeProfile || !this.activeModule) return;
+            
+            // This prefix physically isolates Addition data from Multiplication data
+            const prefix = `math_${this.activeProfile}_${this.activeModule}_`;
 
             const savedHistory = localStorage.getItem(prefix + 'history');
             const savedUnlocks = localStorage.getItem(prefix + 'unlocked');
@@ -457,12 +519,13 @@ createApp({
                 this.targetAccuracy = settings.targetAccuracy || 90;
                 this.windowSize = settings.windowSize || 10;
                 this.gameMode = settings.gameMode || 'campaign';
+                this.allowNegatives = settings.allowNegatives || false;
             }
         },
         
         saveData() {
-            if (!this.activeProfile) return;
-            const prefix = `math_${this.activeProfile}_`;
+            if (!this.activeProfile || !this.activeModule) return;
+            const prefix = `math_${this.activeProfile}_${this.activeModule}_`;
 
             localStorage.setItem(prefix + 'history', JSON.stringify(this.history));
             localStorage.setItem(prefix + 'unlocked', JSON.stringify(this.unlockedNumbers));
@@ -472,7 +535,8 @@ createApp({
                 targetSpeed: this.targetSpeed,
                 targetAccuracy: this.targetAccuracy,
                 windowSize: this.windowSize,
-                gameMode: this.gameMode
+                gameMode: this.gameMode,
+                allowNegatives: this.allowNegatives
             }));
         },
 
@@ -496,6 +560,7 @@ createApp({
             const payload = {
                 device_id: this.deviceId,
                 username: this.leaderboardForm.username,
+                module_type: this.activeModule, 
                 age_bracket: this.leaderboardForm.ageBracket || null,
                 country: this.leaderboardForm.country || null,
                 state: this.leaderboardForm.state || null,
@@ -535,7 +600,7 @@ createApp({
 
         resetProgress() {
             if(confirm(`Are you sure you want to delete all saved data for ${this.activeProfile}? This cannot be undone.`)) {
-                const prefix = `math_${this.activeProfile}_`;
+                const prefix = `math_${this.activeProfile}_${this.activeModule}_`;
                 localStorage.removeItem(prefix + 'history');
                 localStorage.removeItem(prefix + 'unlocked');
                 localStorage.removeItem(prefix + 'determination');
@@ -557,7 +622,7 @@ createApp({
             for (const att of this.recentAttempts) {
                 const min = Math.min(att.num1, att.num2);
                 const max = Math.max(att.num1, att.num2);
-                const key = `${min}x${max}`;
+                const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
                 if (!recentPairStats[key]) recentPairStats[key] = { attempts: 0, correct: 0, totalTime: 0 };
                 recentPairStats[key].attempts++;
                 if (att.isCorrect) recentPairStats[key].correct++;
@@ -570,7 +635,8 @@ createApp({
                 const avgSpeed = s.totalTime / s.attempts;
                 
                 if (accuracy < this.targetAccuracy || avgSpeed > this.targetSpeed) {
-                    const [n1, n2] = key.split('x').map(Number);
+                    const separator = key.includes('+') ? '+' : 'x';
+                    const [n1, n2] = key.replace('add_', '').split(separator).map(Number);
                     weak.push([n1, n2]);
                 }
             }
@@ -583,7 +649,7 @@ createApp({
                 for (const n2 of this.unlockedNumbers) {
                     const min = Math.min(n1, n2);
                     const max = Math.max(n1, n2);
-                    const key = `${min}x${max}`;
+                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
                     if (!this.bestPairStatsMap[key] || this.bestPairStatsMap[key].attempts === 0) {
                         untested.push([n1, n2]);
                     }
@@ -630,7 +696,8 @@ createApp({
             };
 
             const activeModuleConfig = {
-                type: 'multiplication'
+                type: this.activeModule,
+                allowNegatives: this.allowNegatives
             };
 
             const question = QuestionFactory.create(activeModuleConfig, context);
@@ -683,7 +750,15 @@ createApp({
         },
         appendNumber(num) {
             this.resetIdleTimer();
-            if (this.userAnswer.length < 4) {
+            if (num === '-') {
+                if (!this.userAnswer.includes('-')) {
+                    this.userAnswer = '-' + this.userAnswer;
+                } else {
+                    this.userAnswer = this.userAnswer.replace('-', '');
+                }
+                return;
+            }
+            if (this.userAnswer.length < 5) {
                 this.userAnswer += num.toString();
             }
         },
@@ -772,6 +847,8 @@ createApp({
             }
             if (event.key >= '0' && event.key <= '9') {
                 this.appendNumber(parseInt(event.key));
+            } else if (event.key === '-') {
+                this.appendNumber('-');
             } else if (event.key === 'Enter') {
                 this.submitAnswer();
             } else if (event.key === 'Backspace') {
