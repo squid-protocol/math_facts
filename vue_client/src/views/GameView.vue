@@ -1,7 +1,7 @@
 <template>
-    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-start relative">
       
-        <div id="calculator-box" class="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-indigo-100 flex flex-col lg:col-span-5 sticky top-6">
+        <div id="calculator-box" class="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-indigo-100 flex flex-col lg:col-span-5 sticky top-6 w-full max-w-full">
 
             <Teleport to="#navbar-module-slot" v-if="isMounted">
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -53,14 +53,14 @@
              <div class="bg-indigo-600 p-6 text-white border-b border-indigo-700 relative">
                 <div class="flex justify-between items-start mb-6">
                     
-                    <div class="relative z-50">
+                    <div class="relative z-50 w-full max-w-[70%]">
                         <span class="block text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-1">Practice Engine</span>
                         
-                        <button @click="showProfileDropdown = !showProfileDropdown" class="flex items-center gap-2 group focus:outline-none">
-                            <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white group-hover:text-indigo-100 transition drop-shadow-sm">
+                        <button @click="showProfileDropdown = !showProfileDropdown" class="flex items-center gap-2 group focus:outline-none w-full">
+                            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white group-hover:text-indigo-100 transition drop-shadow-sm truncate max-w-[150px] sm:max-w-xs">
                                 {{ activeProfile }}
                             </h1>
-                            <svg class="w-8 h-8 text-indigo-300 group-hover:text-white transition transform" :class="{'rotate-180': showProfileDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M19 9l-7 7-7-7"></path></svg>
+                            <svg class="w-8 h-8 text-indigo-300 group-hover:text-white transition transform shrink-0" :class="{'rotate-180': showProfileDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         
                         <div v-if="showProfileDropdown" class="absolute left-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100 origin-top-left transform transition-all">
@@ -85,7 +85,7 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-2 mt-1 relative z-50">
+                    <div class="flex gap-2 mt-1 relative z-50 shrink-0">
                         <button v-if="currentView === 'game'" @click="currentView = 'settings'" class="text-sm bg-indigo-500 hover:bg-indigo-400 px-4 py-2 rounded-full font-bold transition shadow-sm flex items-center gap-2">
                             ⚙️ <span class="hidden sm:inline">Settings</span>
                         </button>
@@ -95,22 +95,22 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-2 bg-indigo-900/40 rounded-xl p-3 border border-indigo-500/30 shadow-inner">
+                <div class="grid grid-cols-4 gap-1 sm:gap-2 bg-indigo-900/40 rounded-xl p-2 sm:p-3 border border-indigo-500/30 shadow-inner">
                     <div class="text-center border-r border-indigo-500/30">
                         <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Level</span>
-                        <span class="font-bold text-amber-400 text-lg leading-none">{{ playerLevel }}</span>
+                        <span class="font-bold text-amber-400 text-base sm:text-lg leading-none">{{ playerLevel }}</span>
                     </div>
                     <div class="text-center border-r border-indigo-500/30">
                         <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Avg Speed</span>
-                        <span class="font-mono font-bold text-lg leading-none" :class="(recentSpeed <= targetSpeed) ? 'text-emerald-400' : 'text-yellow-400'">{{ recentSpeed }}s</span>
+                        <span class="font-mono font-bold text-base sm:text-lg leading-none" :class="(recentSpeed <= targetSpeed) ? 'text-emerald-400' : 'text-yellow-400'">{{ recentSpeed }}s</span>
                     </div>
                     <div class="text-center border-r border-indigo-500/30">
                         <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Accuracy</span>
-                        <span class="font-mono font-bold text-white text-lg leading-none">{{ recentAccuracy }}%</span>
+                        <span class="font-mono font-bold text-white text-base sm:text-lg leading-none">{{ recentAccuracy }}%</span>
                     </div>
                     <div class="text-center">
                         <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Mode</span>
-                        <span class="font-bold text-white capitalize text-xs leading-none mt-1 inline-block">{{ gameMode }}</span>
+                        <span class="font-bold text-white capitalize text-[10px] sm:text-xs leading-none mt-1 inline-block">{{ gameMode }}</span>
                     </div>
                 </div>
             </div>
@@ -176,7 +176,7 @@
                 </div>
 
                 <div class="text-center mb-8 relative">
-                    <div class="text-7xl font-black text-slate-800 tracking-tighter mb-6 drop-shadow-sm">
+                    <div class="text-5xl sm:text-7xl font-black text-slate-800 tracking-tighter mb-4 sm:mb-6 drop-shadow-sm break-words px-2">
                         <template v-if="!isPaused">
                             {{ currentQuestion.displayString }}
                         </template>
@@ -188,7 +188,7 @@
                     </div>
                     
                     <input type="text" v-model="userAnswer" readonly :class="{'shake border-red-500 text-red-500': isWrong}"
-                           class="w-full text-center text-5xl font-black py-4 rounded-2xl bg-slate-50 border-4 border-slate-200 focus:outline-none transition-colors duration-200 shadow-inner"
+                           class="w-full text-center text-4xl sm:text-5xl font-black py-3 sm:py-4 rounded-2xl bg-slate-50 border-4 border-slate-200 focus:outline-none transition-colors duration-200 shadow-inner"
                            placeholder="?">
                            
                     <div v-if="feedback" class="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-2xl z-10">
@@ -202,27 +202,27 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-3 gap-2 sm:gap-3">
                     <button v-for="n in 9" :key="n" @click="appendNumber(n)" 
-                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-2xl sm:text-3xl font-black py-3 sm:py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
                         {{ n }}
                     </button>
                     
                     <button @click="appendNumber('-')" 
-                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-2xl sm:text-3xl font-black py-3 sm:py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
                         (-)
                     </button>
                     <button @click="appendNumber(0)" 
-                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-2xl sm:text-3xl font-black py-3 sm:py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
                         0
                     </button>
                     <button @click="clearAnswer" 
-                            class="keypad-btn bg-red-50 hover:bg-red-100 text-red-500 text-xl font-bold py-5 rounded-2xl shadow-sm border-b-4 border-red-200 transition-all">
+                            class="keypad-btn bg-red-50 hover:bg-red-100 text-red-500 text-lg sm:text-xl font-bold py-3 sm:py-5 rounded-2xl shadow-sm border-b-4 border-red-200 transition-all">
                         Clear
                     </button>
                     
                     <button @click="submitAnswer" 
-                            class="col-span-3 keypad-btn bg-emerald-500 hover:bg-emerald-600 text-white text-3xl font-black py-5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition-all">
+                            class="col-span-3 keypad-btn bg-emerald-500 hover:bg-emerald-600 text-white text-2xl sm:text-3xl font-black py-3 sm:py-5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition-all">
                         Go
                     </button>
                 </div>
@@ -230,44 +230,11 @@
 
         </div>
 
-        <MasteryDashboard 
-          :determinationScore="determinationScore"
-          :masteryScore="masteryScore"
-          :playerLevel="playerLevel"
-          :isSharing="isSharing"
-          :gridColumns="gridColumns"
-          :unlockedNumbers="unlockedNumbers"
-          :bestPairStatsMap="bestPairStatsMap"
-          :lastAnswered="lastAnswered"
-          :activeModule="activeModule"
-          :tierDistribution="tierDistribution"
-          :maxTierCount="maxTierCount"
-          :history="history"
-          @open-leaderboard="openLeaderboard"
-          @share-stats="shareStats"
-        />
+        <MasteryDashboard :activeModule="activeModule" :bestPairStatsMap="bestPairStatsMap" :determinationScore="determinationScore" :gridColumns="gridColumns" :history="history" :isSharing="isSharing" :lastAnswered="lastAnswered" :masteryScore="masteryScore" :maxTierCount="maxTierCount" :playerLevel="playerLevel" :tierDistribution="tierDistribution" :unlockedNumbers="unlockedNumbers" @open-leaderboard="openLeaderboard" @share-stats="shareStats"/>
 
-        <LeaderboardModal 
-          :show="showLeaderboardModal"
-          :activeModule="activeModule"
-          :history="history"
-          :determinationScore="determinationScore"
-          :masteryScore="masteryScore"
-          :playerLevel="playerLevel"
-          :sessionStartTime="sessionStartTime"
-          :initialPlayerLevel="initialPlayerLevel"
-          :initialMasteryScore="initialMasteryScore"
-          :initialDetermination="initialDetermination"
-          @close="showLeaderboardModal = false; resumeGame()"
-        />
+        <LeaderboardModal :activeModule="activeModule" :determinationScore="determinationScore" :history="history" :initialDetermination="initialDetermination" :initialMasteryScore="initialMasteryScore" :initialPlayerLevel="initialPlayerLevel" :masteryScore="masteryScore" :playerLevel="playerLevel" :sessionStartTime="sessionStartTime" :show="showLeaderboardModal" @close="showLeaderboardModal = false; resumeGame()"/>
 
-        <ShareModal 
-          :show="showShareModal"
-          :playerLevel="playerLevel"
-          :determinationScore="determinationScore"
-          :currentUrl="currentUrl"
-          @close="showShareModal = false; resumeGame()"
-        />
+        <ShareModal :currentUrl="currentUrl" :determinationScore="determinationScore" :playerLevel="playerLevel" :show="showShareModal" @close="showShareModal = false; resumeGame()"/>
 
     </div>
 </template>
