@@ -29,7 +29,7 @@
                         <input type="text" v-model="leaderboardForm.username" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none" placeholder="e.g. MathWizard99">
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Age Bracket (Optional)</label>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Age (Optional)</label>
                         <select v-model="leaderboardForm.ageBracket" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none appearance-none">
                             <option value="">Select Age...</option>
                             <option value="under_10">Under 10</option>
@@ -47,7 +47,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Country</label>
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1">Location (optional)</label>
                             <select v-model="leaderboardForm.country" :disabled="isFetchingGeo" class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 focus:border-indigo-500 focus:outline-none appearance-none disabled:opacity-50">
                                 <option value="">{{ isFetchingGeo ? 'Loading Planet...' : 'Select Country...' }}</option>
                                 <option v-for="c in globalCountries" :key="c.code2" :value="c.code2">{{ c.name }}</option>
