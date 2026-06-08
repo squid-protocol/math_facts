@@ -1,0 +1,65 @@
+<template>
+    <div class="max-w-4xl mx-auto my-12 px-4 font-sans text-slate-800">
+        <h1 class="text-4xl font-black tracking-tight text-slate-900 mb-2">
+            Frequently Asked Questions
+        </h1>
+        <p class="text-lg font-bold text-slate-500 mb-8">
+            Everything you need to know about training modes, scoring mechanics, and data privacy.
+        </p>
+
+        <hr class="border-slate-200 my-6">
+
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-lg font-black text-slate-900 mb-1">
+                    How do I use the different practice modes?
+                </h3>
+                <p class="text-slate-600 leading-relaxed">
+                    The engine offers three targeted pathways depending on your training goals. <strong>Campaign Mode</strong> scales your numerical grid infinitely as you prove your math facts mastery. <strong>Weak Spots Mode</strong> monitors your response history and instantly targets problems where your precision or response rates are low. <strong>Total Test Mode</strong> challenges your global fluency by serving up unpredictable combinations across a 12x12 matrix.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-black text-slate-900 mb-1">
+                    Why did I stop receiving points for correct answers?
+                </h3>
+                <p class="text-slate-600 leading-relaxed">
+                    If you are playing to build your Determination Score, the engine implements an intentional "Easy Penalty." Coasting through items you have already fully mastered yields zero grit points. To get the score moving again, toggle your settings to target complex facts or challenge yourself to slice fractions of a second off your current rolling average.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-black text-slate-900 mb-1">
+                    Is my data safe and compliant with privacy regulations?
+                </h3>
+                <p class="text-slate-600 leading-relaxed">
+                    Absolutely. We maintain a zero-friction privacy posture fully aligned with global GDPR requirements. Because your raw practice history lives inside your local web browser session, your actual data profile never interacts with external cloud systems unless you proactively choose to benchmark your progress on our rankings page.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-black text-slate-900 mb-1">
+                    How are leaderboard entries handled?
+                </h3>
+                <p class="text-slate-600 leading-relaxed">
+                    Joining the global rankings is completely optional and strictly for fun. When submitting a score, you are prompted to input a custom handle or initials. Any demographic indicators—such as generalized age brackets or broad geographic locations—are entirely optional, stripped of direct identifiers, and used solely for ranking analyses.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-black text-slate-900 mb-1">
+                    What do you do with learning metrics?
+                </h3>
+                <p class="text-slate-600 leading-relaxed">
+                    We periodically analyze macro-level, anonymized system benchmarks (like identifying which structural grid components take groups the longest to master) to assess the longitudinal efficacy of our instructional methods. This high-level telemetry data contains no individual profile tracking and serves entirely to boost the educational value of the engine.
+                </p>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'FaqView'
+}
+</script>

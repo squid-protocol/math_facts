@@ -13,11 +13,6 @@ def index_view(request):
     return render(request, "index.html")
 
 
-def analytics_view(request):
-    """Renders the global geographic and demographic charts."""
-    return render(request, "analytics.html")
-
-
 @staff_member_required
 def utility_dashboard(request):
     """Renders the admin telemetry dashboard with live database stats."""
