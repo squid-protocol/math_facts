@@ -67,7 +67,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "frontend", BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "vue_client" / "dist", BASE_DIR / "frontend", BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -129,6 +129,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "vue_client" / "dist",
+]
+
+# Django Q2 Configuration
 
 # Django Q2 Configuration
 Q_CLUSTER = {
