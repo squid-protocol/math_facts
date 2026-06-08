@@ -40,5 +40,17 @@ jobs:
     - name: Run Django Migrations
       run: python manage.py migrate
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Boot Vue Server in Background
+      run: |
+        cd vue_client
+        npm install
+        npm run dev &
+        sleep 5
+
     - name: Execute End-to-End Tests
       run: pytest math_app/test_frontend.py --browser ${{ matrix.browser }}
