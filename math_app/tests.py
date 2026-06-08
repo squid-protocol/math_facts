@@ -421,9 +421,11 @@ def test_api_enforces_integer_boundaries(client):
     # 422 Unprocessable Entity confirms Ninja blocked it before hitting PostgreSQL
     assert response.status_code == 422
 
+
 # ==========================================
 # 7. ROUTING & SANITATION EDGE CASES
 # ==========================================
+
 
 def test_api_handles_empty_string_names(client):
     """Ensure a literally empty string hits the first sanitation fallback."""
@@ -445,6 +447,7 @@ def test_api_handles_empty_string_names(client):
         content_type="application/json",
     )
     assert LeaderboardEntry.objects.last().username == "Anonymous"
+
 
 def test_index_view_renders(client):
     """Ensure the Django index view serves the Vue SPA shell."""
