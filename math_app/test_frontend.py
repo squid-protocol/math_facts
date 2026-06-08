@@ -10,15 +10,18 @@ os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 # We also skip these tests in CI environments where Vite is not running
 pytestmark = [
     pytest.mark.django_db,
-    pytest.mark.skipif("GITHUB_ACTIONS" in os.environ, reason="Vite dev server not running in CI")
+    pytest.mark.skipif(
+        "GITHUB_ACTIONS" in os.environ, reason="Vite dev server not running in CI"
+    ),
 ]
 
 # ==========================================
 # 1. CORE GAMEPLAY ENGINE
 # ==========================================
 
+
 def test_engine_calculator_and_keyboard_flow(page: Page):
-    """Boot the browser, navigate to the engine, and simulate math interactions via UI and Keyboard."""
+    """Boot the browser, navigate to the engine, and simulate math interactions."""
     page.goto("http://127.0.0.1:5173")
     expect(page).to_have_title("FastMathFacts")
     expect(page.get_by_role("heading", name="Guest")).to_be_visible()
@@ -29,7 +32,7 @@ def test_engine_calculator_and_keyboard_flow(page: Page):
     page.get_by_role("button", name="1", exact=True).click()
     page.get_by_role("button", name="2", exact=True).click()
     expect(input_box).to_have_value("12")
-    
+
     # 2. Test Clear Button
     page.get_by_role("button", name="Clear", exact=True).click()
     expect(input_box).to_have_value("")
@@ -38,7 +41,7 @@ def test_engine_calculator_and_keyboard_flow(page: Page):
     page.keyboard.press("4")
     page.keyboard.press("2")
     expect(input_box).to_have_value("42")
-    
+
     # 4. Test Keyboard Backspace
     page.keyboard.press("Backspace")
     expect(input_box).to_have_value("4")
@@ -51,7 +54,7 @@ def test_engine_calculator_and_keyboard_flow(page: Page):
 def test_negative_numbers_toggle(page: Page):
     """Ensure the user can enable negative numbers and type negative answers."""
     page.goto("http://127.0.0.1:5173")
-    
+
     # Check the Negatives checkbox
     page.locator("#nav-negatives").check()
     expect(page.locator("#nav-negatives")).to_be_checked()
@@ -65,20 +68,22 @@ def test_negative_numbers_toggle(page: Page):
 def test_pause_and_resume_overlay(page: Page):
     """Ensure clicking off the calculator safely pauses the game."""
     page.goto("http://127.0.0.1:5173")
-    
+
     # Click empty space on the far left side of the screen
     page.mouse.click(10, 10)
-    
+
     # Verify the pause overlay blocks the screen
     expect(page.get_by_text("Game Paused")).to_be_visible()
-    
+
     # Click to resume
     page.get_by_text("Click here to resume").click()
     expect(page.get_by_text("Game Paused")).not_to_be_visible()
 
+
 # ==========================================
 # 2. APP STATE & NAVIGATION
 # ==========================================
+
 
 def test_settings_menu_and_sliders(page: Page):
     """Ensure the user can swap between the game board, modes, and settings."""
@@ -105,14 +110,16 @@ def test_module_switcher(page: Page):
 
     # Select the dropdown and cycle through engines
     dropdown = page.locator("select").first
-    
+
     # Use 'addition' since it is guaranteed to be in the DOM
     dropdown.select_option("addition")
     expect(dropdown).to_have_value("addition")
 
+
 # ==========================================
 # 3. PROFILES, SAVING & MODALS
 # ==========================================
+
 
 def test_create_player_profile(page: Page):
     """Ensure a user can create and isolate a new local player profile."""
@@ -145,7 +152,6 @@ def test_leaderboard_modal_flow(page: Page):
     expect(submit_btn).to_be_enabled()
 
     # Test the Geographic API loading logic
-    country_dropdown = page.locator("select").nth(1)  # The second select is Age, third is Country
     # Wait for the external JSON geography API to populate the select before choosing US
     page.locator("select:has(option[value='US'])").select_option("US", timeout=10000)
 
@@ -174,14 +180,17 @@ def test_share_modal_generation(page: Page):
 # 4. SPA ROUTING & NAVIGATION
 # ==========================================
 
+
 def test_spa_navigation_routing(page: Page):
-    """Ensure the Vue Router correctly navigates between all major views without reloading the page."""
+    """Ensure the Vue Router correctly navigates between all major views."""
     page.goto("http://127.0.0.1:5173")
 
     # 1. Test Leaderboard (Analytics)
     page.get_by_role("link", name="Leaderboard").first.click()
     expect(page).to_have_url("http://127.0.0.1:5173/analytics/")
-    expect(page.get_by_role("heading", name="International Bragging Rights")).to_be_visible()
+    expect(
+        page.get_by_role("heading", name="International Bragging Rights")
+    ).to_be_visible()
 
     # 2. Test About Page (via Hover Menu)
     page.get_by_text("Menu").hover()
@@ -193,7 +202,9 @@ def test_spa_navigation_routing(page: Page):
     page.get_by_text("Menu").hover()
     page.get_by_role("link", name="FAQ & Support").click()
     expect(page).to_have_url("http://127.0.0.1:5173/faq/")
-    expect(page.get_by_role("heading", name="Frequently Asked Questions")).to_be_visible()
+    expect(
+        page.get_by_role("heading", name="Frequently Asked Questions")
+    ).to_be_visible()
 
     # 4. Test Privacy Policy (Footer)
     page.get_by_role("link", name="Privacy Policy").first.click()
