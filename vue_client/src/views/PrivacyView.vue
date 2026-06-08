@@ -52,6 +52,18 @@
                     We periodically analyze macro-level, anonymized system benchmarks from our leaderboard (e.g., identifying which math facts take generalized age groups the longest to master). This high-level telemetry data contains no individual profile tracking and serves entirely to boost the educational value of the engine and refine our teaching algorithms over time.
                 </p>
             </section>
+        </div>
 
-            <section>
-                <h2 class="text-2xl font-black tracking
+        <div class="mt-12 p-6 bg-slate-50 border border-slate-200 rounded-2xl">
+            <p class="text-sm text-slate-500 font-bold text-center">
+                Last Updated: June 2026. For terms of use, please review our <router-link to="/terms/" class="text-indigo-500 hover:text-indigo-600 underline">Terms of Service</router-link>.
+            </p>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'PrivacyView'
+}
+</script>
