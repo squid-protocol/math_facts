@@ -1,5 +1,19 @@
-{% verbatim %}
         <div id="calculator-box" class="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-indigo-100 flex flex-col lg:col-span-5 sticky top-6">
+
+            <Teleport to="#navbar-module-slot">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <select :value="activeModule" @change="switchModule($event.target.value)" class="bg-slate-800 hover:bg-slate-700 text-slate-100 text-[10px] sm:text-[11px] uppercase tracking-widest font-black px-2 sm:px-3 py-2 rounded-lg cursor-pointer border border-slate-600 focus:outline-none transition-colors shadow-sm outline-none">
+                        <option value="multiplication">Multiplication (×)</option>
+                        <option value="addition">Addition (+)</option>
+                    </select>
+                    
+                    <div class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-2 sm:px-3 py-2 rounded-lg border border-slate-600 transition-colors shadow-sm cursor-pointer">
+                        <input type="checkbox" id="nav-negatives" v-model="allowNegatives" @change="saveData(); generateQuestion()" class="w-3.5 h-3.5 sm:w-4 sm:h-4 accent-indigo-500 rounded cursor-pointer shrink-0">
+                        <label for="nav-negatives" class="text-[10px] sm:text-[11px] uppercase tracking-widest font-black text-slate-200 cursor-pointer select-none hidden sm:block">Negatives (-)</label>
+                        <label for="nav-negatives" class="text-[10px] sm:text-[11px] uppercase tracking-widest font-black text-slate-200 cursor-pointer select-none sm:hidden">(-)</label>
+                    </div>
+                </div>
+            </Teleport>
 
             <div v-if="isPaused" @click.stop="resumeGame" class="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center cursor-pointer">
                 <div class="bg-white p-8 rounded-2xl shadow-2xl text-center transform transition-transform hover:scale-105 border-4 border-slate-700">
@@ -159,10 +173,12 @@
                 <div class="text-center mb-8 relative">
                     <div class="text-7xl font-black text-slate-800 tracking-tighter mb-6 drop-shadow-sm">
                         <template v-if="!isPaused">
-                            {{ currentQuestion.num1 }} <span class="text-indigo-400">×</span> {{ currentQuestion.num2 }}
+                            {{ currentQuestion.displayString }}
                         </template>
                         <template v-else>
-                            <span class="text-slate-300">?</span> <span class="text-indigo-200">×</span> <span class="text-slate-300">?</span>
+                            <span class="text-slate-300">?</span> 
+                            <span class="text-indigo-200">{{ activeModule === 'addition' ? '+' : '×' }}</span> 
+                            <span class="text-slate-300">?</span>
                         </template>
                     </div>
                     
@@ -186,20 +202,25 @@
                             class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
                         {{ n }}
                     </button>
-                    <button @click="clearAnswer" 
-                            class="keypad-btn bg-red-50 hover:bg-red-100 text-red-500 text-xl font-bold py-5 rounded-2xl shadow-sm border-b-4 border-red-200 transition-all">
-                        Clear
+                    
+                    <button @click="appendNumber('-')" 
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                        (-)
                     </button>
                     <button @click="appendNumber(0)" 
                             class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
                         0
                     </button>
+                    <button @click="clearAnswer" 
+                            class="keypad-btn bg-red-50 hover:bg-red-100 text-red-500 text-xl font-bold py-5 rounded-2xl shadow-sm border-b-4 border-red-200 transition-all">
+                        Clear
+                    </button>
+                    
                     <button @click="submitAnswer" 
-                            class="keypad-btn bg-emerald-500 hover:bg-emerald-600 text-white text-3xl font-black py-5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition-all">
+                            class="col-span-3 keypad-btn bg-emerald-500 hover:bg-emerald-600 text-white text-3xl font-black py-5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition-all">
                         Go
                     </button>
                 </div>
             </div>
 
         </div>
-{% endverbatim %}

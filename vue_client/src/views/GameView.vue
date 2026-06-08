@@ -1,98 +1,294 @@
-const QuestionFactory = {
-    create(config, context) {
-        if (config.type === 'multiplication') {
-            return this.buildMultiplication(config, context);
-        }
-        if (config.type === 'addition') {
-            return this.buildAddition(config, context);
-        }
-        throw new Error("Unknown generator type: " + config.type);
+<template>
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
+      
+        <div id="calculator-box" class="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-indigo-100 flex flex-col lg:col-span-5 sticky top-6">
+
+            <Teleport to="#navbar-module-slot" v-if="isMounted">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <select :value="activeModule" @change="switchModule($event.target.value)" class="bg-slate-800 hover:bg-slate-700 text-slate-100 text-[10px] sm:text-[11px] uppercase tracking-widest font-black px-2 sm:px-3 py-2 rounded-lg cursor-pointer border border-slate-600 focus:outline-none transition-colors shadow-sm outline-none">
+                        <option value="multiplication">Multiplication (×)</option>
+                        <option value="division">Division (÷)</option>
+                        <option value="addition">Addition (+)</option>
+                        <option value="subtraction">Subtraction (-)</option>
+                    </select>
+                    
+                    <div class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-2 sm:px-3 py-2 rounded-lg border border-slate-600 transition-colors shadow-sm cursor-pointer">
+                        <input type="checkbox" id="nav-negatives" v-model="allowNegatives" @change="saveData(); generateQuestion()" class="w-3.5 h-3.5 sm:w-4 sm:h-4 accent-indigo-500 rounded cursor-pointer shrink-0">
+                        <label for="nav-negatives" class="text-[10px] sm:text-[11px] uppercase tracking-widest font-black text-slate-200 cursor-pointer select-none hidden sm:block">Negatives (-)</label>
+                        <label for="nav-negatives" class="text-[10px] sm:text-[11px] uppercase tracking-widest font-black text-slate-200 cursor-pointer select-none sm:hidden">(-)</label>
+                    </div>
+                </div>
+            </Teleport>
+
+            <div v-if="isPaused" @click.stop="resumeGame" class="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center cursor-pointer">
+                <div class="bg-white p-8 rounded-2xl shadow-2xl text-center transform transition-transform hover:scale-105 border-4 border-slate-700">
+                    <div class="text-5xl mb-4">⏸️</div>
+                    <h3 class="text-2xl font-black text-slate-800 mb-2">Game Paused</h3>
+                    <p v-if="wasIdle" class="text-amber-600 font-bold mb-2">Idle timeout: timer reset.</p>
+                    <p class="text-slate-500 font-bold">Click here to resume</p>
+                </div>
+            </div>
+
+            <div v-if="showAddPlayerModal" class="absolute inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 rounded-3xl">
+                <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden p-8 border-4 border-indigo-500 transform transition-all">
+                    <h3 class="text-2xl font-black text-slate-800 mb-2">New Player</h3>
+                    <p class="text-sm font-bold text-slate-500 mb-6">Enter your name or initials to track your personal growth.</p>
+                    
+                    <input type="text" v-model="newProfileName" 
+                           @input="newProfileName = newProfileName.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 15)"
+                           @keyup.enter="confirmAddPlayer"
+                           placeholder="e.g. MathWizard" 
+                           class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-4 font-black text-slate-800 focus:border-indigo-500 focus:outline-none mb-2 text-xl text-center shadow-inner">
+                    <p class="text-[10px] text-slate-400 font-bold mb-8 text-center uppercase tracking-widest">Max 15 chars. Letters & numbers only.</p>
+                    
+                    <div class="flex gap-3">
+                        <button @click="showAddPlayerModal = false; newProfileName = ''" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition">Cancel</button>
+                        <button @click="confirmAddPlayer" :disabled="!newProfileName" class="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-300 text-white font-bold py-3 rounded-xl transition shadow-md">Add Player</button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="showProfileDropdown" @click="showProfileDropdown = false" class="fixed inset-0 z-40"></div>
+
+             <div class="bg-indigo-600 p-6 text-white border-b border-indigo-700 relative">
+                <div class="flex justify-between items-start mb-6">
+                    
+                    <div class="relative z-50">
+                        <span class="block text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-1">Practice Engine</span>
+                        
+                        <button @click="showProfileDropdown = !showProfileDropdown" class="flex items-center gap-2 group focus:outline-none">
+                            <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white group-hover:text-indigo-100 transition drop-shadow-sm">
+                                {{ activeProfile }}
+                            </h1>
+                            <svg class="w-8 h-8 text-indigo-300 group-hover:text-white transition transform" :class="{'rotate-180': showProfileDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        
+                        <div v-if="showProfileDropdown" class="absolute left-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100 origin-top-left transform transition-all">
+                            <div class="p-3 bg-slate-50 border-b border-slate-100">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Switch Player</span>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto">
+                                <button @click="selectProfile('Guest'); showProfileDropdown = false" class="w-full text-left px-5 py-3 font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition border-b border-slate-50 flex justify-between items-center">
+                                    Guest Player
+                                    <span v-if="'Guest' === activeProfile" class="text-indigo-500">✓</span>
+                                </button>
+                                <button v-for="p in profiles" :key="p" @click="selectProfile(p); showProfileDropdown = false" class="w-full text-left px-5 py-3 font-bold text-slate-800 hover:bg-indigo-50 hover:text-indigo-600 transition border-b border-slate-50 flex justify-between items-center">
+                                    {{ p }}
+                                    <span v-if="p === activeProfile" class="text-indigo-500 font-black">✓</span>
+                                </button>
+                            </div>
+                            <div class="p-3 bg-slate-50 border-t border-slate-100">
+                                <button @click="showProfileDropdown = false; showAddPlayerModal = true" class="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-black py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm">
+                                    <span class="text-lg leading-none">+</span> Add New Player
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-1 relative z-50">
+                        <button v-if="currentView === 'game'" @click="currentView = 'settings'" class="text-sm bg-indigo-500 hover:bg-indigo-400 px-4 py-2 rounded-full font-bold transition shadow-sm flex items-center gap-2">
+                            ⚙️ <span class="hidden sm:inline">Settings</span>
+                        </button>
+                        <button v-if="currentView === 'settings'" @click="currentView = 'game'" class="text-sm bg-emerald-500 hover:bg-emerald-400 px-4 py-2 rounded-full font-black transition shadow-md flex items-center gap-2">
+                            ▶️ <span class="hidden sm:inline">Resume</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-2 bg-indigo-900/40 rounded-xl p-3 border border-indigo-500/30 shadow-inner">
+                    <div class="text-center border-r border-indigo-500/30">
+                        <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Level</span>
+                        <span class="font-bold text-amber-400 text-lg leading-none">{{ playerLevel }}</span>
+                    </div>
+                    <div class="text-center border-r border-indigo-500/30">
+                        <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Avg Speed</span>
+                        <span class="font-mono font-bold text-lg leading-none" :class="(recentSpeed <= targetSpeed) ? 'text-emerald-400' : 'text-yellow-400'">{{ recentSpeed }}s</span>
+                    </div>
+                    <div class="text-center border-r border-indigo-500/30">
+                        <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Accuracy</span>
+                        <span class="font-mono font-bold text-white text-lg leading-none">{{ recentAccuracy }}%</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-[9px] font-black uppercase tracking-widest text-indigo-300">Mode</span>
+                        <span class="font-bold text-white capitalize text-xs leading-none mt-1 inline-block">{{ gameMode }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'settings'" class="p-6 flex-grow overflow-y-auto">
+                <h2 class="text-xl font-bold text-slate-800 mb-4">Game Mode</h2>
+                <div class="grid grid-cols-1 gap-2 mb-8">
+                    <button @click="gameMode = 'campaign'; saveData(); generateQuestion()" :class="gameMode === 'campaign' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-indigo-50'" class="font-bold py-3 rounded-xl text-sm transition flex justify-between px-4 shadow-sm">
+                        <span>🏆 Campaign</span>
+                        <span class="font-normal opacity-75">Infinite progression</span>
+                    </button>
+                    <button @click="gameMode = 'weak'; saveData(); generateQuestion()" :class="gameMode === 'weak' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-indigo-50'" class="font-bold py-3 rounded-xl text-sm transition flex justify-between px-4 shadow-sm">
+                        <span>🎯 Weak Spots</span>
+                        <span class="font-normal opacity-75">Target slow squares</span>
+                    </button>
+                    <button @click="gameMode = 'total'; saveData(); generateQuestion()" :class="gameMode === 'total' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-indigo-50'" class="font-bold py-3 rounded-xl text-sm transition flex justify-between px-4 shadow-sm">
+                        <span>🌍 Total Test</span>
+                        <span class="font-normal opacity-75">Random 0-12 (No progression)</span>
+                    </button>
+                </div>
+
+                <h2 class="text-xl font-bold text-slate-800 mb-4">Mastery Thresholds</h2>
+                
+                <div class="space-y-6 mb-8">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="font-bold text-slate-700 text-sm">Target Speed</label>
+                            <span class="font-mono text-indigo-600 font-bold">{{ targetSpeed }}s</span>
+                        </div>
+                        <input type="range" v-model.number="targetSpeed" @change="saveData" min="1.0" max="8.0" step="0.5" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="font-bold text-slate-700 text-sm">Target Accuracy</label>
+                            <span class="font-mono text-indigo-600 font-bold">{{ targetAccuracy }}%</span>
+                        </div>
+                        <input type="range" v-model.number="targetAccuracy" @change="saveData" min="50" max="100" step="5" class="w-full accent-indigo-600">
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="font-bold text-slate-700 text-sm">Base Evaluation Window</label>
+                            <span class="font-mono text-indigo-600 font-bold">{{ windowSize }}</span>
+                        </div>
+                        <input type="range" v-model.number="windowSize" @change="saveData" min="5" max="30" step="1" class="w-full accent-indigo-600">
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-6 mt-6 space-y-3">
+                    <button @click="logoutProfile" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition">
+                        Switch Player Profile
+                    </button>
+                    <button @click="resetProgress" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition">
+                        Reset All Data (Start Over)
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'game'" class="p-6 flex-grow flex flex-col justify-center">
+                <div v-if="justUnlocked" class="animate-rainbow p-4 rounded-xl text-center font-black mb-6 shadow-lg transform transition-transform animate-bounce">
+                    🎉 LEVEL UP! You unlocked the {{ justUnlocked }}s! 🎉
+                </div>
+
+                <div class="text-center mb-8 relative">
+                    <div class="text-7xl font-black text-slate-800 tracking-tighter mb-6 drop-shadow-sm">
+                        <template v-if="!isPaused">
+                            {{ currentQuestion.displayString }}
+                        </template>
+                        <template v-else>
+                            <span class="text-slate-300">?</span> 
+                            <span class="text-indigo-200">{{ activeModule === 'addition' ? '+' : (activeModule === 'subtraction' ? '-' : (activeModule === 'division' ? '÷' : '×')) }}</span> 
+                            <span class="text-slate-300">?</span>
+                        </template>
+                    </div>
+                    
+                    <input type="text" v-model="userAnswer" readonly :class="{'shake border-red-500 text-red-500': isWrong}"
+                           class="w-full text-center text-5xl font-black py-4 rounded-2xl bg-slate-50 border-4 border-slate-200 focus:outline-none transition-colors duration-200 shadow-inner"
+                           placeholder="?">
+                           
+                    <div v-if="feedback" class="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-2xl z-10">
+                        <div class="text-center transform scale-150 transition-transform">
+                            <div v-if="feedback.isCorrect" class="text-emerald-500 text-6xl drop-shadow-md">⭐</div>
+                            <div v-else class="text-red-500 text-6xl drop-shadow-md">❌</div>
+                            <div class="font-bold mt-2" :class="feedback.isCorrect ? 'text-emerald-600' : 'text-red-600'">
+                                {{ feedback.message }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <button v-for="n in 9" :key="n" @click="appendNumber(n)" 
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                        {{ n }}
+                    </button>
+                    
+                    <button @click="appendNumber('-')" 
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                        (-)
+                    </button>
+                    <button @click="appendNumber(0)" 
+                            class="keypad-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-3xl font-black py-5 rounded-2xl shadow-sm border-b-4 border-slate-200 transition-all">
+                        0
+                    </button>
+                    <button @click="clearAnswer" 
+                            class="keypad-btn bg-red-50 hover:bg-red-100 text-red-500 text-xl font-bold py-5 rounded-2xl shadow-sm border-b-4 border-red-200 transition-all">
+                        Clear
+                    </button>
+                    
+                    <button @click="submitAnswer" 
+                            class="col-span-3 keypad-btn bg-emerald-500 hover:bg-emerald-600 text-white text-3xl font-black py-5 rounded-2xl shadow-md border-b-4 border-emerald-700 transition-all">
+                        Go
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <MasteryDashboard 
+          :determinationScore="determinationScore"
+          :masteryScore="masteryScore"
+          :playerLevel="playerLevel"
+          :isSharing="isSharing"
+          :gridColumns="gridColumns"
+          :unlockedNumbers="unlockedNumbers"
+          :bestPairStatsMap="bestPairStatsMap"
+          :lastAnswered="lastAnswered"
+          :activeModule="activeModule"
+          :tierDistribution="tierDistribution"
+          :maxTierCount="maxTierCount"
+          :history="history"
+          @open-leaderboard="openLeaderboard"
+          @share-stats="shareStats"
+        />
+
+        <LeaderboardModal 
+          :show="showLeaderboardModal"
+          :activeModule="activeModule"
+          :history="history"
+          :determinationScore="determinationScore"
+          :masteryScore="masteryScore"
+          :playerLevel="playerLevel"
+          :sessionStartTime="sessionStartTime"
+          :initialPlayerLevel="initialPlayerLevel"
+          :initialMasteryScore="initialMasteryScore"
+          :initialDetermination="initialDetermination"
+          @close="showLeaderboardModal = false; resumeGame()"
+        />
+
+        <ShareModal 
+          :show="showShareModal"
+          :playerLevel="playerLevel"
+          :determinationScore="determinationScore"
+          :currentUrl="currentUrl"
+          @close="showShareModal = false; resumeGame()"
+        />
+
+    </div>
+</template>
+
+<script>
+import MasteryDashboard from '../components/MasteryDashboard.vue';
+import LeaderboardModal from '../components/LeaderboardModal.vue';
+import ShareModal from '../components/ShareModal.vue';
+import { QuestionFactory } from '../QuestionFactory.js';
+import * as htmlToImage from 'html-to-image';
+
+export default {
+    name: 'GameView',
+    components: {
+        MasteryDashboard,
+        LeaderboardModal,
+        ShareModal
     },
-
-    // A helper method to pick the core numbers based on the user's game mode
-    _pickBaseNumbers(context) {
-        let n1 = 0, n2 = 0;
-        if (context.gameMode === 'total') {
-            const maxIndex = context.gridColumns.length;
-            n1 = Math.floor(Math.random() * maxIndex);
-            n2 = Math.floor(Math.random() * maxIndex);
-        } else if (context.gameMode === 'weak' && context.weakSpots.length > 0) {
-            const spot = context.weakSpots[Math.floor(Math.random() * context.weakSpots.length)];
-            n1 = spot[0];
-            n2 = spot[1];
-        } else {
-            const r = Math.random();
-            if (r <= 0.50 && context.untestedPairs.length > 0) {
-                const spot = context.untestedPairs[Math.floor(Math.random() * context.untestedPairs.length)];
-                n1 = spot[0];
-                n2 = spot[1];
-            } else if (r > 0.75 && context.weakSpots.length > 0) {
-                const spot = context.weakSpots[Math.floor(Math.random() * context.weakSpots.length)];
-                n1 = spot[0];
-                n2 = spot[1];
-            } else {
-                const poolIndex1 = Math.floor(Math.random() * context.unlockedNumbers.length);
-                const poolIndex2 = Math.floor(Math.random() * context.unlockedNumbers.length);
-                n1 = context.unlockedNumbers[poolIndex1];
-                n2 = context.unlockedNumbers[poolIndex2];
-            }
-        }
-        return [n1, n2];
-    },
-
-    buildMultiplication(config, context) {
-        let [n1, n2] = this._pickBaseNumbers(context);
-
-        if (config.allowNegatives) {
-            if (Math.random() > 0.5 && n1 !== 0) n1 *= -1;
-            if (Math.random() > 0.5 && n2 !== 0) n2 *= -1;
-        }
-
-        const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
-        const n2Str = displayOrder[1] < 0 ? `(${displayOrder[1]})` : `${displayOrder[1]}`;
-        
-        // Preserve the legacy key format "3x4" so users don't lose past data
-        const min = Math.min(n1, n2);
-        const max = Math.max(n1, n2);
-
-        return {
-            num1: displayOrder[0],
-            num2: displayOrder[1],
-            displayString: `${displayOrder[0]} × ${n2Str}`,
-            correctAnswer: n1 * n2,
-            trackingKey: `${min}x${max}`
-        };
-    },
-
-    buildAddition(config, context) {
-        let [n1, n2] = this._pickBaseNumbers(context);
-
-        if (config.allowNegatives) {
-            if (Math.random() > 0.5 && n1 !== 0) n1 *= -1;
-            if (Math.random() > 0.5 && n2 !== 0) n2 *= -1;
-        }
-
-        const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
-        const n2Str = displayOrder[1] < 0 ? `(${displayOrder[1]})` : `${displayOrder[1]}`;
-        
-        const min = Math.min(n1, n2);
-        const max = Math.max(n1, n2);
-
-        return {
-            num1: displayOrder[0],
-            num2: displayOrder[1],
-            displayString: `${displayOrder[0]} + ${n2Str}`,
-            correctAnswer: n1 + n2,
-            trackingKey: `add_${min}+${max}`
-        };
-    }
-};
-
-const { createApp } = Vue
-
-createApp({
     data() {
         return {
+            isMounted: false,
             unlockSequence: [[7], [8], [9], [10], [11], [12]],
             unlockedNumbers: [0, 1, 2, 3, 4, 5, 6],
             
@@ -114,7 +310,6 @@ createApp({
             justUnlocked: null,
             currentView: 'game',
 
-            // Profile State
             profiles: [],
             activeProfile: 'Guest',
             showProfileDropdown: false,
@@ -125,11 +320,7 @@ createApp({
             showLeaderboardModal: false,
             showShareModal: false,
             isSharing: false,
-            submissionState: 'idle', 
-            leaderboardForm: { username: '', ageBracket: '', country: '', state: '', consentToTrack: false },
             deviceId: null,
-            usStates: ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'],
-            allCountries: ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czechia', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman', 'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Rwanda', 'Samoa', 'San Marino', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe'],
 
             sessionStartTime: Date.now(),
             initialMasteryScore: 0,
@@ -142,32 +333,6 @@ createApp({
             windowSize: 10, 
             activeModule: 'multiplication',
             allowNegatives: false,
-
-            globalCountries: [],
-            availableRegions: [],
-            isFetchingGeo: false
-        }
-    },
-    watch: {
-        showLeaderboardModal(isOpen) {
-            if (isOpen && this.globalCountries.length === 0) {
-                this.isFetchingGeo = true;
-                fetch('https://raw.githubusercontent.com/stefanbinder/countries-states/master/countries.json')
-                    .then(res => res.json())
-                    .then(data => {
-                        this.globalCountries = data;
-                        this.isFetchingGeo = false;
-                    })
-                    .catch(err => {
-                        console.error('Failed to load global geography', err);
-                        this.isFetchingGeo = false;
-                    });
-            }
-        },
-        'leaderboardForm.country'(newCode) {
-            this.leaderboardForm.state = '';
-            const country = this.globalCountries.find(c => c.code2 === newCode);
-            this.availableRegions = country && country.states ? country.states : [];
         }
     },
     computed: {
@@ -179,17 +344,13 @@ createApp({
             const maxLen = Math.max(13, this.maxGridNumber + 1);
             return Array.from({length: maxLen}, (_, i) => i); 
         },
-        isGridMassive() { return true; },
-        
-        cellSizeClass() { return 'w-7 h-7 md:w-8 md:h-8'; },
-        headerSizeClass() { return 'w-7 h-5 text-[9px] md:w-8 md:text-[10px]'; },
-        
+
         bestPairStatsMap() {
             const pairHistory = {};
             for (const att of this.history) {
                 const min = Math.min(att.num1, att.num2);
                 const max = Math.max(att.num1, att.num2);
-                const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
+                const key = this.activeModule === 'addition' ? `add_${min}+${max}` : (this.activeModule === 'subtraction' ? `sub_${max}-${min}` : (this.activeModule === 'division' ? `div_${min}/${max}` : `${min}x${max}`));
                 if (!pairHistory[key]) pairHistory[key] = [];
                 pairHistory[key].push(att);
             }
@@ -248,7 +409,7 @@ createApp({
                 for (const col of this.gridColumns) {
                     const min = Math.min(row, col);
                     const max = Math.max(row, col);
-                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
+                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : (this.activeModule === 'subtraction' ? `sub_${max}-${min}` : (this.activeModule === 'division' ? `div_${min}/${max}` : `${min}x${max}`));
                     
                     if (!countedKeys.has(key)) {
                         countedKeys.add(key);
@@ -285,7 +446,7 @@ createApp({
                 for (const col of this.gridColumns) {
                     const min = Math.min(row, col);
                     const max = Math.max(row, col);
-                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
+                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : (this.activeModule === 'subtraction' ? `sub_${max}-${min}` : (this.activeModule === 'division' ? `div_${min}/${max}` : `${min}x${max}`));
                     
                     if (!countedKeys.has(key)) {
                         countedKeys.add(key);
@@ -332,11 +493,10 @@ createApp({
     },
     methods: {
         switchModule(newModule) {
-            this.saveData(); // Save progress in current module before swapping
+            this.saveData(); 
             this.activeModule = newModule;
             localStorage.setItem(`fastMathLastModule_${this.activeProfile}`, newModule);
             
-            // Wipe working memory to prevent bleed-over
             this.history = [];
             this.unlockedNumbers = [0, 1, 2, 3, 4, 5, 6];
             this.unlockSequence = [[7], [8], [9], [10], [11], [12]];
@@ -363,11 +523,9 @@ createApp({
             this.activeProfile = name;
             localStorage.setItem('fastMathLastProfile', name);
             
-            // Check if they were playing Addition or Multiplication last
             const lastMod = localStorage.getItem(`fastMathLastModule_${name}`);
             this.activeModule = lastMod ? lastMod : 'multiplication';
             
-            // Wipe the state clean so we don't bleed data between profiles
             this.history = [];
             this.unlockedNumbers = [0, 1, 2, 3, 4, 5, 6];
             this.unlockSequence = [[7], [8], [9], [10], [11], [12]];
@@ -391,113 +549,49 @@ createApp({
                 const element = document.getElementById('mastery-dashboard-card');
                 if (!element) return;
 
-                const canvas = await html2canvas(element, {
-                    scale: 2, 
-                    useCORS: true,
-                    backgroundColor: '#ffffff'
+                const blob = await htmlToImage.toBlob(element, {
+                    pixelRatio: 2, 
+                    backgroundColor: '#ffffff',
+                    skipFonts: true
                 });
 
-                canvas.toBlob(async (blob) => {
-                    const file = new File([blob], 'math-mastery.png', { type: 'image/png' });
+                const file = new File([blob], 'math-mastery.png', { type: 'image/png' });
 
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                title: 'My FastMathFacts Mastery!',
-                                text: `I've reached Level ${this.playerLevel} with a Determination score of ${this.determinationScore}! Can you beat my math stats?`,
-                                files: [file]
-                            });
-                        } catch (err) {
-                            console.log('Share canceled or failed', err);
-                        }
-                    } else {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'FastMath-Mastery.png';
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        
-                        // Silently download, then trigger our custom social modal
-                        this.showShareModal = true;
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            title: 'My FastMathFacts Mastery!',
+                            text: `I've reached Level ${this.playerLevel} with a Determination score of ${this.determinationScore}! Can you beat my math stats?`,
+                            files: [file]
+                        });
+                    } catch (err) {
+                        console.log('Share canceled or failed', err);
                     }
-                    this.isSharing = false;
-                }, 'image/png');
-
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'FastMath-Mastery.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    this.showShareModal = true;
+                }
+                this.isSharing = false;
             } catch (err) {
                 console.error("Failed to capture image", err);
                 this.isSharing = false;
             }
         },
 
-        getPairStats(row, col) {
-            const min = Math.min(row, col);
-            const max = Math.max(row, col);
-            const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
-            const stat = this.bestPairStatsMap[key];
-            if (!stat) return { attempts: 0 };
-            return stat;
-        },
-        
-        getSpeedColorClass(speedStr, attempts) {
-            if (attempts === 0) return 'bg-slate-50 text-black/20';
-            const speed = parseFloat(speedStr);
-            
-            if (speed <= 0.25) return 'bg-gradient-to-br from-pink-400 to-pink-600 text-white animate-metal-pulse'; 
-            if (speed <= 0.50) return 'bg-gradient-to-br from-purple-400 to-purple-600 text-white animate-metal-pulse'; 
-            if (speed <= 0.75) return 'bg-gradient-to-br from-indigo-400 to-indigo-600 text-white animate-metal-pulse'; 
-            if (speed <= 1.00) return 'bg-gradient-to-br from-blue-400 to-blue-600 text-white animate-metal-pulse';
-            
-            if (speed <= 2.0) return 'bg-cyan-500 text-white';
-            if (speed <= 3.0) return 'bg-teal-500 text-white'; 
-            if (speed <= 4.0) return 'bg-emerald-500 text-white';   
-            if (speed <= 5.0) return 'bg-green-500 text-white';  
-            if (speed <= 6.0) return 'bg-yellow-400 text-yellow-900'; 
-            if (speed <= 8.0) return 'bg-orange-500 text-white'; 
-            
-            return 'bg-red-600 text-white'; 
-        },
-
-        isLastAnsweredPair(row, col) {
-            if (!this.lastAnswered.trigger) return false;
-            return (row === this.lastAnswered.num1 && col === this.lastAnswered.num2) ||
-                   (row === this.lastAnswered.num2 && col === this.lastAnswered.num1);
-        },
-
-        isLastAnsweredBar(num) {
-            if (!this.lastAnswered.trigger) return false;
-            return num === this.lastAnswered.num1 || num === this.lastAnswered.num2;
-        },
-
-        getBestNumberAvgSpeed(num) {
-            const attempts = this.history.filter(att => att.num1 === num || att.num2 === num);
-            if (attempts.length === 0) return 0;
-            
-            let bestSpeed = Infinity;
-            if (attempts.length <= 10) {
-                const total = attempts.reduce((sum, a) => sum + a.timeSeconds, 0);
-                bestSpeed = total / attempts.length;
-            } else {
-                for (let i = 0; i <= attempts.length - 10; i++) {
-                    const window = attempts.slice(i, i + 10);
-                    const total = window.reduce((sum, a) => sum + a.timeSeconds, 0);
-                    if ((total / 10) < bestSpeed) bestSpeed = total / 10;
-                }
-            }
-            return bestSpeed.toFixed(1);
-        },
-
-        getBarHeight(num) {
-            const speed = parseFloat(this.getBestNumberAvgSpeed(num));
-            if (speed === 0) return 0; 
-            let height = (speed / 8.0) * 100;
-            return Math.max(5, Math.min(height, 100)); 
+        openLeaderboard() {
+            this.showLeaderboardModal = true;
+            this.pauseGame();
         },
 
         loadData() {
             if (!this.activeProfile || !this.activeModule) return;
             
-            // This prefix physically isolates Addition data from Multiplication data
             const prefix = `math_${this.activeProfile}_${this.activeModule}_`;
 
             const savedHistory = localStorage.getItem(prefix + 'history');
@@ -540,64 +634,6 @@ createApp({
             }));
         },
 
-        async submitLeaderboard() {
-            if (!this.leaderboardForm.username) return;
-
-            const totalAttempts = this.history.length;
-            const correctCount = this.history.filter(a => a.isCorrect).length;
-            const sessionAccuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
-
-            if (this.leaderboardForm.consentToTrack) {
-                if (!this.deviceId) {
-                    this.deviceId = crypto.randomUUID();
-                    localStorage.setItem('fastMathDeviceId', this.deviceId);
-                }
-            } else {
-                this.deviceId = null;
-                localStorage.removeItem('fastMathDeviceId');
-            }
-
-            const payload = {
-                device_id: this.deviceId,
-                username: this.leaderboardForm.username,
-                module_type: this.activeModule, 
-                age_bracket: this.leaderboardForm.ageBracket || null,
-                country: this.leaderboardForm.country || null,
-                state: this.leaderboardForm.state || null,
-                determination_score: this.determinationScore,
-                mastery_score: this.masteryScore,
-                player_level: this.playerLevel,
-                session_duration_seconds: Math.floor((Date.now() - this.sessionStartTime) / 1000),
-                total_questions_answered: totalAttempts,
-                session_accuracy_percent: sessionAccuracy,
-                levels_gained: this.playerLevel - this.initialPlayerLevel,
-                mastery_gained: this.masteryScore - this.initialMasteryScore,
-                determination_gained: this.determinationScore - this.initialDetermination
-            };
-
-            this.submissionState = 'submitting';
-
-            try {
-                await fetch('/api/leaderboard/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                this.submissionState = 'success';
-                
-                setTimeout(() => {
-                    this.showLeaderboardModal = false;
-                    this.submissionState = 'idle';
-                    this.resumeGame();
-                }, 2000);
-
-            } catch (error) {
-                this.submissionState = 'error';
-                console.error(error);
-            }
-        },
-
         resetProgress() {
             if(confirm(`Are you sure you want to delete all saved data for ${this.activeProfile}? This cannot be undone.`)) {
                 const prefix = `math_${this.activeProfile}_${this.activeModule}_`;
@@ -622,7 +658,7 @@ createApp({
             for (const att of this.recentAttempts) {
                 const min = Math.min(att.num1, att.num2);
                 const max = Math.max(att.num1, att.num2);
-                const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
+                const key = this.activeModule === 'addition' ? `add_${min}+${max}` : (this.activeModule === 'subtraction' ? `sub_${max}-${min}` : (this.activeModule === 'division' ? `div_${min}/${max}` : `${min}x${max}`));
                 if (!recentPairStats[key]) recentPairStats[key] = { attempts: 0, correct: 0, totalTime: 0 };
                 recentPairStats[key].attempts++;
                 if (att.isCorrect) recentPairStats[key].correct++;
@@ -635,8 +671,16 @@ createApp({
                 const avgSpeed = s.totalTime / s.attempts;
                 
                 if (accuracy < this.targetAccuracy || avgSpeed > this.targetSpeed) {
-                    const separator = key.includes('+') ? '+' : 'x';
-                    const [n1, n2] = key.replace('add_', '').split(separator).map(Number);
+                    let n1, n2;
+                    if (key.startsWith('add_')) {
+                        [n1, n2] = key.replace('add_', '').split('+').map(Number);
+                    } else if (key.startsWith('sub_')) {
+                        [n1, n2] = key.replace('sub_', '').split('-').map(Number);
+                    } else if (key.startsWith('div_')) {
+                        [n1, n2] = key.replace('div_', '').split('/').map(Number);
+                    } else {
+                        [n1, n2] = key.split('x').map(Number);
+                    }
                     weak.push([n1, n2]);
                 }
             }
@@ -649,7 +693,7 @@ createApp({
                 for (const n2 of this.unlockedNumbers) {
                     const min = Math.min(n1, n2);
                     const max = Math.max(n1, n2);
-                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : `${min}x${max}`;
+                    const key = this.activeModule === 'addition' ? `add_${min}+${max}` : (this.activeModule === 'subtraction' ? `sub_${max}-${min}` : (this.activeModule === 'division' ? `div_${min}/${max}` : `${min}x${max}`));
                     if (!this.bestPairStatsMap[key] || this.bestPairStatsMap[key].attempts === 0) {
                         untested.push([n1, n2]);
                     }
@@ -860,10 +904,11 @@ createApp({
         }
     },
     mounted() {
+        this.isMounted = true;
+        
         const savedProfiles = localStorage.getItem('fastMathProfiles');
         if (savedProfiles) this.profiles = JSON.parse(savedProfiles);
 
-        // Load whoever was playing last, otherwise default to Guest
         const lastProfile = localStorage.getItem('fastMathLastProfile');
         this.activeProfile = lastProfile && (this.profiles.includes(lastProfile) || lastProfile === 'Guest') ? lastProfile : 'Guest';
         
@@ -880,4 +925,5 @@ createApp({
         window.removeEventListener('blur', () => this.pauseGame(false));
         clearTimeout(this.idleTimeout);
     }
-}).mount('#app')
+}
+</script>

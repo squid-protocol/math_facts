@@ -34,7 +34,7 @@ def test_analytics_summary_creation_and_str():
         country="US", state="MI", avg_mastery=2000, total_sessions=5
     )
     assert summary.id is not None
-    assert str(summary) == "US - MI"
+    assert str(summary) == "US - MI (multiplication)"
 
 
 # ==========================================
@@ -146,20 +146,6 @@ def test_update_global_analytics_aggregation():
 # ==========================================
 # 4. VIEW & SECURITY TESTS (Routing & Access)
 # ==========================================
-
-
-def test_index_view_renders(client):
-    """Ensure the main game page loads successfully."""
-    response = client.get(reverse("math_app:index"))
-    assert response.status_code == 200
-    assert "components/calculator_engine.html" in [t.name for t in response.templates]
-
-
-def test_analytics_view_renders(client):
-    """Ensure the public leaderboard page loads successfully."""
-    response = client.get(reverse("math_app:analytics"))
-    assert response.status_code == 200
-    assert "analytics.html" in [t.name for t in response.templates]
 
 
 def test_utility_dashboard_requires_staff(client):
@@ -434,3 +420,37 @@ def test_api_enforces_integer_boundaries(client):
 
     # 422 Unprocessable Entity confirms Ninja blocked it before hitting PostgreSQL
     assert response.status_code == 422
+
+
+# ==========================================
+# 7. ROUTING & SANITATION EDGE CASES
+# ==========================================
+
+
+def test_api_handles_empty_string_names(client):
+    """Ensure a literally empty string hits the first sanitation fallback."""
+    payload = {
+        "username": "",
+        "determination_score": 0,
+        "mastery_score": 0,
+        "player_level": 1,
+        "session_duration_seconds": 60,
+        "total_questions_answered": 10,
+        "session_accuracy_percent": 100,
+        "levels_gained": 0,
+        "mastery_gained": 0,
+        "determination_gained": 0,
+    }
+    client.post(
+        "/api/leaderboard/submit",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+    assert LeaderboardEntry.objects.last().username == "Anonymous"
+
+
+def test_index_view_renders(client):
+    """Ensure the Django index view serves the Vue SPA shell."""
+    response = client.get(reverse("math_app:index"))
+    assert response.status_code == 200
+    assert "index.html" in [t.name for t in response.templates]
