@@ -7,6 +7,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 from math_app.api import api
 
@@ -22,4 +23,5 @@ urlpatterns = [
     path("api/", api.urls),
     # Forward all other traffic to the math_app
     path("", include("math_app.urls")),
+    path('sitemap.xml', TemplateView.as_view(template_name='sitemap.xml', content_type='text/xml')),
 ]
