@@ -192,7 +192,7 @@ def test_spa_navigation_routing(page: Page):
         page.get_by_role("heading", name="International Bragging Rights")
     ).to_be_visible()
 
-# 2. Test About Page (via Click Menu)
+    # 2. Test About Page (via Click Menu)
     page.get_by_text("Menu").click()
     page.wait_for_timeout(300)
     page.get_by_role("link", name="About the Engine").click()

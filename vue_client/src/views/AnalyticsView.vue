@@ -61,7 +61,7 @@
                     <div class="flex-grow">
                         <div class="font-black text-slate-800 text-lg">{{ entry.username }}</div>
                         <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            {{ formatAge(entry.age_bracket) }} • {{ entry.state ? entry.state + ', ' : '' }}{{ entry.country || 'Unknown' }}
+                            {{ formatAge(entry.age_bracket) }} • {{ entry.state ? entry.state + ', ' : '' }}{{ formatCountry(entry.country) }}
                         </div>
                     </div>
                     <div class="text-right flex gap-3">
@@ -176,6 +176,16 @@ export default {
         }
     },
     methods: {
+        formatCountry(code) {
+            if (!code) return 'Unknown';
+            try {
+                const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+                return regionNames.of(code) || code;
+            } catch (e) {
+                return code;
+            }
+        },
+
         formatAge(key) {
             const map = {
                 'under_10': 'Under 10', '10_13': '10-13', '14_17': '14-17', 
