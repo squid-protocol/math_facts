@@ -46,6 +46,9 @@ const QuestionFactory = {
         if (config.allowNegatives) {
             if (Math.random() > 0.5 && n1 !== 0) n1 *= -1;
             if (Math.random() > 0.5 && n2 !== 0) n2 *= -1;
+        } else {
+            n1 = Math.abs(n1);
+            n2 = Math.abs(n2);
         }
 
         const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
@@ -70,6 +73,9 @@ const QuestionFactory = {
         if (config.allowNegatives) {
             if (Math.random() > 0.5 && n1 !== 0) n1 *= -1;
             if (Math.random() > 0.5 && n2 !== 0) n2 *= -1;
+        } else {
+            n1 = Math.abs(n1);
+            n2 = Math.abs(n2);
         }
 
         const displayOrder = Math.random() > 0.5 ? [n1, n2] : [n2, n1];
