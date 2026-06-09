@@ -72,13 +72,6 @@
                                     isLastAnsweredPair(row, col) ? (lastAnswered.isCorrect ? 'animate-glow-gold' : 'animate-glow-red') : ''
                                  ]"
                                  class="relative group rounded-sm flex flex-col items-center justify-center shadow-sm transition-colors duration-200 border border-black/5 shrink-0 cursor-pointer">
-                                
-                                <template v-if="!isGridMassive && getPairStats(row, col).attempts > 0">
-                                    <span class="font-black leading-none mt-0.5 drop-shadow-sm text-sm sm:text-base">{{ getPairStats(row, col).speed }}s</span>
-                                </template>
-                                <template v-else-if="!isGridMassive">
-                                    <span class="text-black/20 text-sm font-bold">-</span>
-                                </template>
 
                                 <div v-if="getPairStats(row, col).attempts > 0" 
                                      class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center bg-slate-800 text-white rounded-lg py-2 px-3 z-50 whitespace-nowrap shadow-xl">
