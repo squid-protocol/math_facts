@@ -21,8 +21,9 @@
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Engine</label>
                         <select v-model="filterModule" class="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm font-bold focus:outline-none border border-slate-600">
-                            <option value="multiplication">Multiplication</option>
-                            <option value="addition">Addition</option>
+                            <option v-for="mod in availableModules" :key="mod.value" :value="mod.value">
+                                {{ mod.label }}
+                            </option>
                         </select>
                     </div>
                     <div>
@@ -133,6 +134,12 @@ export default {
     data() {
         return {
             entries: [],
+            availableModules: [
+                { value: 'multiplication', label: 'Multiplication' },
+                { value: 'division', label: 'Division' },
+                { value: 'addition', label: 'Addition' },
+                { value: 'subtraction', label: 'Subtraction' }
+            ],
             filterModule: 'multiplication',
             sortBy: 'mastery_score',
             filterAge: 'ALL',
@@ -189,7 +196,8 @@ export default {
                 }
                 
                 const data = await response.json();
-                this.entries = data.data;
+                // Handle both { data: [...] } and direct array [...] Django responses
+                this.entries = Array.isArray(data) ? data : (data.data || []);
             } catch (err) {
                 console.error("Failed to load analytics. Is the Django server running?", err);
                 this.entries = []; // Fallback to an empty list so the app doesn't crash

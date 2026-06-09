@@ -192,14 +192,16 @@ def test_spa_navigation_routing(page: Page):
         page.get_by_role("heading", name="International Bragging Rights")
     ).to_be_visible()
 
-    # 2. Test About Page (via Hover Menu)
-    page.get_by_text("Menu").hover()
+# 2. Test About Page (via Click Menu)
+    page.get_by_text("Menu").click()
+    page.wait_for_timeout(300)
     page.get_by_role("link", name="About the Engine").click()
     expect(page).to_have_url("http://127.0.0.1:5173/about/")
     expect(page.get_by_role("heading", name="About FastMathFacts.io")).to_be_visible()
 
-    # 3. Test FAQ Page (via Hover Menu)
-    page.get_by_text("Menu").hover()
+    # 3. Test FAQ Page (via Click Menu)
+    page.get_by_text("Menu").click()
+    page.wait_for_timeout(300)
     page.get_by_role("link", name="FAQ & Support").click()
     expect(page).to_have_url("http://127.0.0.1:5173/faq/")
     expect(

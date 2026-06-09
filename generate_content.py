@@ -2,7 +2,7 @@ import os
 
 # Configuration
 # The distinct app subsystems we want to generate separate markdown files for.
-SUBSYSTEMS = {"config", "frontend", "math_app"}
+SUBSYSTEMS = {"config", "frontend", "math_app", "vue_client"}
 
 # Folders we want to completely skip (Crucial: ignore node_modules!)
 IGNORE_DIRS = {
@@ -38,6 +38,7 @@ def get_language(filename):
         "css": "css",
         "md": "markdown",
         "sh": "bash",
+        "vue": "html",
     }
     return mapping.get(ext, "text")
 
