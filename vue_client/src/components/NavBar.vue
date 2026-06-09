@@ -23,7 +23,7 @@
                   
                   <div :class="isMenuOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'"
                        class="absolute right-0 top-full mt-0 w-48 bg-white text-slate-800 rounded-xl shadow-xl transition-all duration-200 border border-slate-200 overflow-hidden transform origin-top-right">
-                      <router-link @click="closeMenu" to="/analytics/" class="sm:hidden block px-4 py-3 hover:bg-slate-50 border-b border-slate-100">Leaderboard</router-link>
+                       <router-link @click="closeMenu" to="/analytics/" class="sm:hidden block px-4 py-3 hover:bg-slate-50 border-b border-slate-100">Leaderboard</router-link>
                       <router-link @click="closeMenu" to="/about/" class="block px-4 py-3 hover:bg-slate-50 border-b border-slate-100">About the Engine</router-link>
                       <router-link @click="closeMenu" to="/faq/" class="block px-4 py-3 hover:bg-slate-50">FAQ & Support</router-link>
                   </div>
@@ -44,9 +44,11 @@ export default {
   },
   mounted() {
       document.addEventListener('click', this.closeMenu);
+      document.addEventListener('touchstart', this.closeMenu);
   },
   beforeUnmount() {
       document.removeEventListener('click', this.closeMenu);
+      document.removeEventListener('touchstart', this.closeMenu);
   },
   methods: {
       toggleMenu() {
